@@ -1,0 +1,24 @@
+What is shell?
+shell is a program that needs commands from the user and ask the operating system to run them.
+What is bash?
+Bash is a popular linux shell,its full name is Bourne Again Shell.
+What does $SHELL show?
+$SHELL normally shows the configured login shell.
+What does $0 normally shows?
+$0 normally shows the name of current shell or script.
+What is the difference between a terminal and a shell?
+A terminal provides the window
+A shell reads and executes commands inside the terminal.
+
+
+
+
+TASK # 2 
+USER:
+The user types commands and uses Linux programs.
+SHELL:
+The shell reads and understans the commands typed by the user.
+KERNEL:
+The kernel is the core of linux,it manages the CPU ,memory,disks,devices and processes.
+HARDWARE:
+Hardware includes the physical CPU ,memory,storage devices and network devices.
