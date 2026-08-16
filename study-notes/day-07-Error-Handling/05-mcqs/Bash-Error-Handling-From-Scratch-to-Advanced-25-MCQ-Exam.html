@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Bash error handling exam with timer, score, shuffled answers, and explanations.">
+  <title>Bash Error Handling — 25 MCQ Exam</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#06101d; --panel:#101f33; --panel2:#172a44; --text:#eef6ff;
+      --muted:#a8b8cc; --cyan:#45ddd0; --blue:#60a5fa; --green:#34d399;
+      --red:#fb7185; --yellow:#fbbf24; --border:#2b4566;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; color:var(--text);
+      background:
+        radial-gradient(circle at top right,rgb(37 99 235 / 20%),transparent 34rem),
+        radial-gradient(circle at top left,rgb(20 184 166 / 15%),transparent 28rem),
+        var(--bg);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.55;
+    }
+    button,input { font:inherit; }
+    .container { width:min(980px,calc(100% - 28px)); margin:auto; padding:28px 0 60px; }
+    .hero,.toolbar,.question,.result {
+      background:rgb(16 31 51 / 95%); border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 18px 50px rgb(0 0 0 / 28%);
+    }
+    .hero { padding:30px; }
+    .eyebrow { margin:0 0 8px; color:var(--cyan); font-weight:850; letter-spacing:.1em; text-transform:uppercase; font-size:.76rem; }
+    h1 { margin:0; font-size:clamp(1.9rem,5vw,3.1rem); line-height:1.12; }
+    .hero>p:not(.eyebrow) { max-width:780px; color:var(--muted); }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:22px; }
+    .stat { padding:14px; border-radius:13px; background:var(--panel2); border:1px solid var(--border); }
+    .stat span { display:block; color:var(--muted); font-size:.78rem; }
+    .stat strong { font-size:1.12rem; }
+    .toolbar {
+      position:sticky; top:10px; z-index:5; margin:18px 0; padding:14px 18px;
+      display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center;
+    }
+    .track { height:10px; overflow:hidden; border:1px solid var(--border); border-radius:999px; background:#071321; }
+    .bar { width:0; height:100%; background:linear-gradient(90deg,var(--cyan),var(--blue)); transition:width .2s; }
+    .small { margin-top:5px; color:var(--muted); font-size:.82rem; }
+    .timer { font-weight:900; font-variant-numeric:tabular-nums; }
+    .warning { color:var(--yellow); }
+    .question { padding:22px; margin-bottom:16px; }
+    .question h2 { margin:0 0 16px; font-size:1.05rem; }
+    .number { color:var(--cyan); }
+    .options { display:grid; gap:10px; }
+    .option {
+      display:grid; grid-template-columns:auto 1fr; gap:11px; align-items:start;
+      padding:13px 14px; border:1px solid var(--border); border-radius:12px;
+      background:#0a1828; cursor:pointer;
+    }
+    .option:hover { border-color:var(--blue); }
+    .option:has(input:checked) { background:#12334b; border-color:var(--cyan); }
+    .option.correct { background:rgb(16 90 68 / 45%); border-color:var(--green); }
+    .option.incorrect { background:rgb(120 28 52 / 40%); border-color:var(--red); }
+    .option input { margin-top:4px; accent-color:var(--cyan); }
+    .explanation {
+      display:none; margin-top:14px; padding:13px 15px; color:var(--muted);
+      background:#091727; border-left:4px solid var(--blue); border-radius:8px;
+    }
+    .explanation.show { display:block; }
+    .actions { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin:28px 0; }
+    .button { border:0; border-radius:12px; padding:12px 20px; font-weight:850; cursor:pointer; }
+    .primary { color:#03131d; background:linear-gradient(135deg,var(--cyan),#7dd3fc); }
+    .secondary { color:var(--text); background:var(--panel2); border:1px solid var(--border); }
+    .button:disabled { opacity:.5; cursor:not-allowed; }
+    .result { display:none; padding:26px; margin:20px 0; text-align:center; }
+    .result.show { display:block; }
+    .score { font-size:clamp(2.4rem,8vw,4.8rem); font-weight:950; color:var(--cyan); }
+    .message,footer { color:var(--muted); }
+    footer { text-align:center; padding-top:24px; }
+    @media(max-width:700px){
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .toolbar { grid-template-columns:1fr auto; }
+      .toolbar>div:first-child { grid-column:1/-1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Reliability</p>
+      <h1>Error Handling — From Scratch to Advanced</h1>
+      <p>Test exit statuses, stderr, validation, functions, pipelines, strict mode, retries, timeouts, traps, cleanup, and resilient automation. Every reattempt reshuffles questions and choices.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Feedback</span><strong>Explanations</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Exam status">
+      <div>
+        <div class="track"><div class="bar" id="progressBar"></div></div>
+        <div class="small" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="status">In progress</div>
+    </section>
+
+    <form id="quiz"></form>
+    <div class="actions">
+      <button class="button primary" id="submit" type="button">Submit Exam</button>
+      <button class="button secondary" id="review" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="retry" type="button">Reattempt &amp; Shuffle</button>
+    </div>
+
+    <section class="result" id="result" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="score">0%</div>
+      <h2 id="detail"></h2>
+      <p class="message" id="message"></p>
+    </section>
+    <footer><p>Detect → Explain → Respond → Recover</p></footer>
+  </main>
+
+  <script>
+    const quizData=[
+      {q:"What is the main purpose of error handling?",o:["Detect failures and respond deliberately","Hide every command message","Make every script run as root","Convert Bash into Python"],a:"Detect failures and respond deliberately",e:"Error handling detects problems, reports them, selects a safe response, and returns a meaningful status."},
+      {q:"Which command checks Bash syntax without executing normal commands?",o:["bash -n script.sh","bash -x script.sh","chmod +x script.sh","source script.sh"],a:"bash -n script.sh",e:"bash -n parses the script and reports syntax errors without normal execution."},
+      {q:"What does exit status 0 normally mean?",o:["Success","General failure","Command not found","Permission denied"],a:"Success",e:"Unix commands normally use zero for success and nonzero for other results."},
+      {q:"Why must $? be saved immediately?",o:["Another command replaces it","It is automatically encrypted","It is available only to root","It always becomes 255"],a:"Another command replaces it",e:"$? always refers to the most recently completed foreground command or pipeline."},
+      {q:"Which file descriptor represents stderr?",o:["2","0","1","3"],a:"2",e:"stdin is 0, stdout is 1, and stderr is 2."},
+      {q:"Which command sends a message to stderr?",o:["echo \"Error\" >&2","echo \"Error\" >1","echo \"Error\" <2","echo \"Error\" |0"],a:"echo \"Error\" >&2",e:">&2 redirects the command's stdout to the current stderr destination."},
+      {q:"What does exit 1 do?",o:["Stops the script with a nonzero status","Marks the script successful","Returns text from a function","Restarts the shell"],a:"Stops the script with a nonzero status",e:"exit leaves the current shell script and returns the supplied numeric status."},
+      {q:"Why is if command; then often better than checking $? afterward?",o:["It tests the command status directly","It ignores command failure","It runs the command twice","It always returns zero"],a:"It tests the command status directly",e:"Direct testing is clear and avoids accidentally replacing $? before it is checked."},
+      {q:"What does ! do before a command in an if test?",o:["Reverses its success or failure result","Runs it as root","Repeats it forever","Sends output to stderr"],a:"Reverses its success or failure result",e:"! changes success to false and failure to true for the surrounding conditional."},
+      {q:"What is a guard clause?",o:["An early check that rejects invalid conditions","A loop that never ends","A command that grants permissions","A type of redirection"],a:"An early check that rejects invalid conditions",e:"Guard clauses stop or return early, keeping the normal path easier to read."},
+      {q:"What should a reusable function normally use for failure?",o:["return with a nonzero status","exit inside every function","echo a number only","kill the parent shell"],a:"return with a nonzero status",e:"return leaves the function while allowing the caller to decide how the whole script should respond."},
+      {q:"For grep, what does status 1 normally mean?",o:["No match was found","A match was found","The command is missing","The file was deleted"],a:"No match was found",e:"grep normally uses 0 for a match, 1 for no match, and greater values for actual errors."},
+      {q:"Without pipefail, which status normally represents a pipeline?",o:["The final command's status","The first command's status","The largest numeric status","Always zero"],a:"The final command's status",e:"By default, an earlier pipeline failure can be hidden by a successful final command."},
+      {q:"What does set -o pipefail provide?",o:["Pipeline failure when a component fails","Automatic retries","Encrypted pipes","Only stderr in pipelines"],a:"Pipeline failure when a component fails",e:"pipefail makes pipeline status reflect component failure rather than only the final command."},
+      {q:"What does PIPESTATUS contain?",o:["Statuses of individual pipeline commands","Only the script's final status","File descriptor numbers","Background process names"],a:"Statuses of individual pipeline commands",e:"PIPESTATUS is an array of the most recent foreground pipeline's component statuses."},
+      {q:"What does set -u help detect?",o:["Use of unset variables","Every logic error","All missing files","Slow commands"],a:"Use of unset variables",e:"nounset treats many expansions of unset variables as errors."},
+      {q:"Why is set -e not a complete error-handling strategy?",o:["Its behavior has context-dependent exceptions","It never notices failures","It disables exit statuses","It handles only comments"],a:"Its behavior has context-dependent exceptions",e:"errexit has exceptions and cannot replace validation, clear messages, or planned recovery."},
+      {q:"What does ${OPTIONAL:-default} do?",o:["Use default when OPTIONAL is unset or empty","Always overwrite OPTIONAL","Exit immediately","Create an array"],a:"Use default when OPTIONAL is unset or empty",e:":- supplies a fallback value without assigning it."},
+      {q:"Which failures are good retry candidates?",o:["Temporary dependency failures","Invalid argument format","Forbidden paths","Missing required configuration keys"],a:"Temporary dependency failures",e:"Retries are useful for transient conditions, not permanent validation problems."},
+      {q:"What is the purpose of timeout?",o:["Stop a command from waiting indefinitely","Retry a command forever","Make a script executable","Redirect output"],a:"Stop a command from waiting indefinitely",e:"timeout limits how long a command is allowed to run."},
+      {q:"When does an EXIT trap run?",o:["As the shell is exiting","Only after syntax errors","Before every command","Only when status is zero"],a:"As the shell is exiting",e:"An EXIT trap is commonly used for final cleanup and reporting."},
+      {q:"Why save $? at the start of cleanup?",o:["Cleanup commands can change the original status","It converts status into text","It makes the file temporary","It enables pipefail"],a:"Cleanup commands can change the original status",e:"Capturing the status first allows cleanup to preserve the script's real outcome."},
+      {q:"Which tool safely creates a unique temporary file or directory?",o:["mktemp","touch /tmp/fixed","echo $$","mkdir /tmp/data"],a:"mktemp",e:"mktemp reduces predictable-name collisions and creates the target safely."},
+      {q:"How should a batch script handle partial failures?",o:["Count and report each result, then return a documented status","Print success and ignore failures","Stop recording results","Always return zero"],a:"Count and report each result, then return a documented status",e:"Batch automation should make successful, failed, and skipped items visible."},
+      {q:"Which sequence best represents reliable error handling?",o:["Validate, run, check, respond, verify, report","Run, hide errors, print success","Retry everything forever","Use sudo, eval, and unquoted variables"],a:"Validate, run, check, respond, verify, report",e:"Reliable scripts validate first, inspect results, act safely, verify outcomes, and report clearly."}
+    ];
+
+    const state={questions:[],seconds:25*60,timer:null,submitted:false,missed:[]};
+    const form=document.getElementById("quiz");
+    const progressBar=document.getElementById("progressBar");
+    const progressLabel=document.getElementById("progressLabel");
+    const timerElement=document.getElementById("timer");
+    const statusElement=document.getElementById("status");
+    const submitButton=document.getElementById("submit");
+    const reviewButton=document.getElementById("review");
+    const retryButton=document.getElementById("retry");
+    const resultCard=document.getElementById("result");
+    const scoreElement=document.getElementById("score");
+    const detailElement=document.getElementById("detail");
+    const messageElement=document.getElementById("message");
+
+    function shuffle(items){
+      const result=[...items];
+      for(let i=result.length-1;i>0;i-=1){
+        const j=Math.floor(Math.random()*(i+1));
+        [result[i],result[j]]=[result[j],result[i]];
+      }
+      return result;
+    }
+
+    function start(){
+      clearInterval(state.timer);
+      state.questions=shuffle(quizData).map(item=>({...item,o:shuffle(item.o)}));
+      state.seconds=25*60; state.submitted=false; state.missed=[];
+      resultCard.classList.remove("show"); reviewButton.hidden=true;
+      submitButton.disabled=false; statusElement.textContent="In progress";
+      render(); updateProgress(); updateTimer();
+      state.timer=setInterval(tick,1000);
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    function render(){
+      form.innerHTML="";
+      state.questions.forEach((item,index)=>{
+        const card=document.createElement("section");
+        card.className="question"; card.dataset.index=index;
+        const heading=document.createElement("h2");
+        heading.innerHTML=`<span class="number">${index+1}.</span> `;
+        heading.append(document.createTextNode(item.q));
+        const options=document.createElement("div"); options.className="options";
+        item.o.forEach((text,optionIndex)=>{
+          const label=document.createElement("label");
+          label.className="option"; label.dataset.option=text;
+          const input=document.createElement("input");
+          input.type="radio"; input.name=`question-${index}`; input.value=text;
+          input.id=`q-${index}-${optionIndex}`;
+          input.addEventListener("change",updateProgress);
+          const span=document.createElement("span"); span.textContent=text;
+          label.append(input,span); options.append(label);
+        });
+        const explanation=document.createElement("div");
+        explanation.className="explanation"; explanation.textContent=item.e;
+        card.append(heading,options,explanation); form.append(card);
+      });
+    }
+
+    function updateProgress(){
+      const answered=form.querySelectorAll('input:checked').length;
+      progressBar.style.width=`${answered/state.questions.length*100}%`;
+      progressLabel.textContent=`${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer(){
+      const minutes=Math.floor(state.seconds/60);
+      const seconds=state.seconds%60;
+      timerElement.textContent=`${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+      timerElement.classList.toggle("warning",state.seconds<=300);
+    }
+
+    function tick(){
+      state.seconds-=1; updateTimer();
+      if(state.seconds<=0){ clearInterval(state.timer); submitExam(true); }
+    }
+
+    function submitExam(auto=false){
+      if(state.submitted)return;
+      const answered=form.querySelectorAll('input:checked').length;
+      if(!auto&&answered<state.questions.length){
+        const remaining=state.questions.length-answered;
+        if(!window.confirm(`${remaining} question(s) are unanswered. Submit anyway?`))return;
+      }
+      state.submitted=true; clearInterval(state.timer); state.missed=[];
+      let correct=0;
+      state.questions.forEach((item,index)=>{
+        const card=form.querySelector(`[data-index="${index}"]`);
+        const selected=card.querySelector('input:checked');
+        card.querySelectorAll(".option").forEach(label=>{
+          const option=label.dataset.option;
+          if(option===item.a)label.classList.add("correct");
+          if(selected&&option===selected.value&&selected.value!==item.a)label.classList.add("incorrect");
+        });
+        if(selected&&selected.value===item.a)correct+=1;
+        else state.missed.push(index);
+        card.querySelectorAll("input").forEach(input=>{input.disabled=true;});
+        card.querySelector(".explanation").classList.add("show");
+      });
+      const percentage=Math.round(correct/state.questions.length*100);
+      scoreElement.textContent=`${percentage}%`;
+      detailElement.textContent=`${correct} of ${state.questions.length} correct`;
+      if(percentage>=90)messageElement.textContent="Excellent — you can design and explain reliable Bash failure handling.";
+      else if(percentage>=80)messageElement.textContent="Passed — review missed explanations and repeat the related lab tasks.";
+      else if(percentage>=60)messageElement.textContent="Good progress — revisit pipelines, statuses, cleanup, and recovery.";
+      else messageElement.textContent="Return to the foundation notes and Lab 01, then rebuild step by step.";
+      statusElement.textContent=auto?"Time expired":"Submitted";
+      submitButton.disabled=true; reviewButton.hidden=state.missed.length===0;
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+
+    function reviewMissed(){
+      form.querySelectorAll(".question").forEach(card=>{
+        card.hidden=!state.missed.includes(Number(card.dataset.index));
+      });
+      resultCard.classList.remove("show");
+      statusElement.textContent="Reviewing missed";
+      window.scrollTo({top:form.offsetTop-90,behavior:"smooth"});
+    }
+
+    submitButton.addEventListener("click",()=>submitExam(false));
+    reviewButton.addEventListener("click",reviewMissed);
+    retryButton.addEventListener("click",start);
+    start();
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+server,status
+web01,UP
+web02,DOWN
+database01,UP
+backup01,DOWN

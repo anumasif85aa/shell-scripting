@@ -1,0 +1,7 @@
+# Training server list
+web-01
+web-02
+
+api-01
+db-01
+

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 50-question Bash and Bash scripting exam with timer, score, shuffled answers, and explanations.">
+  <title>Bash and Bash Scripting — 50 MCQ Exam</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06101d;
+      --panel: #101f33;
+      --panel2: #172a44;
+      --text: #eef6ff;
+      --muted: #a8b8cc;
+      --cyan: #45ddd0;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --red: #fb7185;
+      --yellow: #fbbf24;
+      --border: #2b4566;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 20%), transparent 34rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 15%), transparent 28rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+    .container { width: min(1000px, calc(100% - 28px)); margin: auto; padding: 28px 0 60px; }
+    .hero, .toolbar, .question, .result {
+      background: rgb(16 31 51 / 95%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    .hero { padding: 30px; }
+    .eyebrow { margin: 0 0 8px; color: var(--cyan); font-weight: 850; letter-spacing: .1em; text-transform: uppercase; font-size: .76rem; }
+    h1 { margin: 0; font-size: clamp(1.9rem, 5vw, 3.1rem); line-height: 1.12; }
+    .hero > p:not(.eyebrow) { max-width: 790px; color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+    .stat { padding: 14px; border-radius: 13px; background: var(--panel2); border: 1px solid var(--border); }
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.12rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .track { height: 10px; overflow: hidden; border: 1px solid var(--border); border-radius: 999px; background: #071321; }
+    .bar { width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--blue)); transition: width .2s; }
+    .small { margin-top: 5px; color: var(--muted); font-size: .82rem; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+    .warning { color: var(--yellow); }
+
+    .question { padding: 22px; margin-bottom: 16px; }
+    .question h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .number { color: var(--cyan); }
+    .options { display: grid; gap: 10px; }
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 11px;
+      align-items: start;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #0a1828;
+      cursor: pointer;
+    }
+
+    .option:hover { border-color: var(--blue); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--cyan); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--green); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--red); }
+    .option input { margin-top: 4px; accent-color: var(--cyan); }
+    .explanation { display: none; margin-top: 14px; padding: 13px 15px; color: var(--muted); background: #091727; border-left: 4px solid var(--blue); border-radius: 8px; }
+    .explanation.show { display: block; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 28px 0; }
+    .button { border: 0; border-radius: 12px; padding: 12px 20px; font-weight: 850; cursor: pointer; }
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--cyan), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .result { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--cyan); }
+    .message, footer { color: var(--muted); }
+    footer { text-align: center; padding-top: 24px; }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Complete Learning Package</p>
+      <h1>Bash and Bash Scripting — 50 MCQ Exam</h1>
+      <p>Test shell fundamentals, commands, scripts, streams, variables, arguments, conditions, loops, functions, arrays, files, debugging, safety, and automation. Questions and choices are reshuffled for every attempt.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>50</strong></div>
+        <div class="stat"><span>Time limit</span><strong>50 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Feedback</span><strong>Explanations</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="track"><div class="bar" id="progressBar"></div></div>
+        <div class="small" id="progressLabel">0 of 50 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">50:00</span></div>
+      <div id="status">In progress</div>
+    </section>
+
+    <form id="quiz"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submit" type="button">Submit Exam</button>
+      <button class="button secondary" id="review" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="retry" type="button">Reattempt &amp; Shuffle</button>
+    </div>
+
+    <section class="result" id="result" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="score">0%</div>
+      <h2 id="detail"></h2>
+      <p class="message" id="message"></p>
+    </section>
+
+    <footer><p>Learn → Practice → Test → Improve</p></footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {q:"What is a shell?",o:["A command interpreter","The Linux kernel","A disk partition","A text editor"],a:"A command interpreter",e:"A shell accepts commands and coordinates their execution."},
+      {q:"What does Bash stand for?",o:["Bourne Again Shell","Basic Automated System Host","Binary Administration Shell","Bourne Application Service Handler"],a:"Bourne Again Shell",e:"Bash is the Bourne Again Shell."},
+      {q:"Which command displays the current directory?",o:["pwd","whoami","cd","where"],a:"pwd",e:"pwd prints the working directory."},
+      {q:"Which command shows hidden files as well as normal files?",o:["ls -la","ls -d","pwd -a","cat -h"],a:"ls -la",e:"The -a option includes hidden names and -l gives a detailed listing."},
+      {q:"Which command helps locate an executable through PATH?",o:["command -v","echo -n","chmod -v","read -r"],a:"command -v",e:"command -v reports how the shell resolves a command name."},
+
+      {q:"What is the main purpose of a shebang?",o:["Select the script interpreter","Grant root access","Create execute permission","Export every variable"],a:"Select the script interpreter",e:"The kernel uses the shebang when a script is executed directly."},
+      {q:"Which is a correct Bash shebang?",o:["#!/bin/bash","#!bin/bash","#/bin/bash","!/bin/bash"],a:"#!/bin/bash",e:"The interpreter path must begin immediately after #!."},
+      {q:"What does bash -n script.sh do?",o:["Checks syntax without running commands","Runs every command normally","Adds execute permission","Creates a new shell user"],a:"Checks syntax without running commands",e:"bash -n parses the script and reports syntax errors."},
+      {q:"Why can bash script.sh run when ./script.sh is not executable?",o:["Bash reads the file as its argument","The kernel ignores permissions","The script becomes root","Comments grant permission"],a:"Bash reads the file as its argument",e:"Bash itself is executable and reads the script file; direct execution requires the file's execute bit."},
+      {q:"Which command gives the owner execute permission?",o:["chmod u+x script.sh","chmod u+r script.sh","chown +x script.sh","exec script.sh"],a:"chmod u+x script.sh",e:"chmod u+x adds execute permission for the file owner."},
+      {q:"Which file descriptor is stdin?",o:["0","1","2","255"],a:"0",e:"Standard input is file descriptor 0."},
+      {q:"Which file descriptor is stdout?",o:["1","0","2","3"],a:"1",e:"Standard output is file descriptor 1."},
+      {q:"Which file descriptor is stderr?",o:["2","0","1","9"],a:"2",e:"Standard error is file descriptor 2."},
+      {q:"What does > do to a target file?",o:["Overwrites it with redirected output","Always appends output","Reads input from it","Changes its owner"],a:"Overwrites it with redirected output",e:"A single > creates or truncates the file before writing redirected output."},
+
+      {q:"Which variable assignment is valid?",o:["name=\"Ali\"","name = \"Ali\"","$name=\"Ali\"","set name == Ali"],a:"name=\"Ali\"",e:"Bash assignments have no spaces around the equals sign and omit $ on the left."},
+      {q:"What is the effect of double quotes around \"$name\"?",o:["Expand the variable while preserving it as one word","Display the characters $name literally","Convert the value to an integer","Export the variable"],a:"Expand the variable while preserving it as one word",e:"Double quotes allow expansion and prevent unintended splitting and globbing."},
+      {q:"What do single quotes do to '$name'?",o:["Keep the text literal","Expand the variable","Run the value as a command","Make it global"],a:"Keep the text literal",e:"Single quotes prevent parameter and command expansion."},
+      {q:"Which syntax captures command output?",o:["$(command)","${command}","[[ command ]]","((command))"],a:"$(command)",e:"Command substitution captures stdout, excluding trailing newlines."},
+      {q:"What does read -r -p do?",o:["Prompts for input and preserves backslashes","Reads only root files","Prints a password","Runs input as a command"],a:"Prompts for input and preserves backslashes",e:"-p supplies a prompt and -r prevents backslash interpretation."},
+      {q:"What does $# represent?",o:["The number of positional arguments","All arguments as one string","The process ID","A comment"],a:"The number of positional arguments",e:"$# expands to the count of positional parameters."},
+      {q:"Which expansion preserves all arguments separately?",o:["\"$@\"","\"$*\"","$#","$0"],a:"\"$@\"",e:"Quoted $@ expands each positional argument as a separate word."},
+      {q:"What does ${name:-Guest} do?",o:["Uses Guest when name is unset or empty","Always replaces name with Guest","Deletes name","Makes name readonly"],a:"Uses Guest when name is unset or empty",e:":- provides a fallback without assigning it."},
+
+      {q:"Which keyword closes a Bash if statement?",o:["fi","done","esac","end"],a:"fi",e:"fi closes an if structure."},
+      {q:"Which numeric operator means greater than or equal?",o:["-ge","-gt","-le","=="],a:"-ge",e:"-ge is the integer greater-than-or-equal operator."},
+      {q:"What does [[ -f \"$path\" ]] test?",o:["The path is a regular file","The path is a directory","The path is empty","The path is a process"],a:"The path is a regular file",e:"-f succeeds for an existing regular file."},
+      {q:"What does [[ -d \"$path\" ]] test?",o:["The path is a directory","The path is a device only","The string is a digit","The command is done"],a:"The path is a directory",e:"-d succeeds when the path exists as a directory."},
+      {q:"What does && mean inside [[ condition1 && condition2 ]]?",o:["Both conditions must be true","Either condition may be true","Reverse the result","Run in the background"],a:"Both conditions must be true",e:"Logical AND requires both conditions to succeed."},
+      {q:"What does || mean between conditions?",o:["At least one condition must be true","Both must be false","Create a pipeline","Start a comment"],a:"At least one condition must be true",e:"Logical OR succeeds when either condition is true."},
+      {q:"Which structure is suitable for many fixed choices?",o:["case","until only","trap","source"],a:"case",e:"case cleanly matches one value against several patterns."},
+      {q:"Which loop naturally processes apple banana cherry?",o:["for fruit in apple banana cherry","if fruit in apple banana cherry","case while fruit","read until fruit"],a:"for fruit in apple banana cherry",e:"A for loop iterates over the supplied words."},
+      {q:"Which loop continues while its test succeeds?",o:["while","case","if","source"],a:"while",e:"while repeats its body while the condition or command returns success."},
+
+      {q:"What does break do inside a loop?",o:["Exits the loop","Skips one command only","Creates a subshell","Returns text"],a:"Exits the loop",e:"break terminates the nearest applicable loop."},
+      {q:"Why use while IFS= read -r line?",o:["Preserve whitespace and backslashes while reading lines","Automatically sort every line","Run the file as root","Remove empty lines automatically"],a:"Preserve whitespace and backslashes while reading lines",e:"IFS= and -r prevent common unwanted transformations."},
+      {q:"What does [[ -e \"$file\" ]] || continue protect against in a glob loop?",o:["An unmatched pattern being treated as a literal item","Every readable file","Function recursion","Numeric overflow"],a:"An unmatched pattern being treated as a literal item",e:"Without nullglob, an unmatched glob can remain unchanged."},
+      {q:"Why use local inside a function?",o:["Limit a variable's scope","Export it globally","Convert it to an array","Run the function in another shell"],a:"Limit a variable's scope",e:"local reduces accidental changes to global variables."},
+      {q:"What should a Bash function use to return text data?",o:["stdout","return with a string","exit with a string","stderr only"],a:"stdout",e:"return supplies a numeric status; stdout commonly carries data."},
+      {q:"What does return 1 normally indicate from a function?",o:["Failure","Success","One line of output","Root access"],a:"Failure",e:"Like commands, functions use zero for success and nonzero for failure or defined conditions."},
+      {q:"Which expansion preserves every array element separately?",o:["\"${array[@]}\"","\"${array[*]}\"","\"$array\"","${#array}"],a:"\"${array[@]}\"",e:"Quoted array[@] preserves individual array element boundaries."},
+      {q:"Which command searches for ERROR without printing matching lines?",o:["grep -q ERROR app.log","grep -v ERROR app.log","cat -q app.log","find ERROR app.log"],a:"grep -q ERROR app.log",e:"grep -q uses its status to report whether a match exists."},
+      {q:"What is a dry run?",o:["A preview that does not perform the change","A script with no comments","A script without stdout","A forced deletion"],a:"A preview that does not perform the change",e:"Dry-run mode shows planned actions so they can be checked safely."},
+
+      {q:"What does set -u help detect?",o:["Use of unset variables","Every syntax error before execution","Large files","Missing execute permission"],a:"Use of unset variables",e:"nounset treats many unset-variable expansions as errors."},
+      {q:"What does set -o pipefail change?",o:["A pipeline can fail when any component fails","Pipes send only stderr","Every pipeline runs in background","Pipes become files"],a:"A pipeline can fail when any component fails",e:"Without pipefail, pipeline status normally comes from the final command."},
+      {q:"Which command traces expanded commands during execution?",o:["bash -x script.sh","bash -n script.sh","chmod -x script.sh","source -q script.sh"],a:"bash -x script.sh",e:"The -x option prints an execution trace useful for debugging."},
+      {q:"What is the purpose of trap cleanup EXIT?",o:["Run cleanup when the script exits","Ignore every signal","Repeat cleanup forever","Make cleanup a child process"],a:"Run cleanup when the script exits",e:"An EXIT trap runs its action as the shell is leaving."},
+      {q:"Which tool safely creates a unique temporary directory?",o:["mktemp -d","mkdir /tmp/data","touch /tmp/temp","echo $$"],a:"mktemp -d",e:"mktemp safely creates a unique temporary directory."},
+      {q:"Why should eval be avoided with untrusted input?",o:["It can turn data into executable shell code","It disables variables","It prevents commands from running","It encrypts the input"],a:"It can turn data into executable shell code",e:"eval reparses constructed text as shell syntax and can enable command injection."},
+      {q:"What does idempotent automation mean?",o:["Repeated runs avoid unintended additional changes","The script always runs once","The script requires root","Every command writes a log"],a:"Repeated runs avoid unintended additional changes",e:"Idempotent automation compares current and desired state and changes only what is needed."},
+      {q:"Why put -- before a user-supplied path in commands that support it?",o:["Stop option parsing","Start a comment","Enable strict mode","Redirect stderr"],a:"Stop option parsing",e:"-- prevents a path beginning with a hyphen from being interpreted as an option."},
+      {q:"What should a failed validation normally produce?",o:["A clear stderr message and nonzero status","Only a success message","Status 0 and no output","A new root shell"],a:"A clear stderr message and nonzero status",e:"Callers and users need both understandable diagnostics and a machine-readable failure status."},
+      {q:"Which sequence best describes reliable automation?",o:["Validate, inspect, decide, act, verify, report","Act, hide errors, then validate","Delete, retry, and ignore status","Use sudo, eval, and unquoted variables"],a:"Validate, inspect, decide, act, verify, report",e:"Reliable automation validates inputs, understands current state, performs deliberate actions, and verifies outcomes."}
+    ];
+
+    const state = {questions:[],seconds:50*60,timer:null,submitted:false,missed:[]};
+    const form=document.getElementById("quiz");
+    const progressBar=document.getElementById("progressBar");
+    const progressLabel=document.getElementById("progressLabel");
+    const timerElement=document.getElementById("timer");
+    const statusElement=document.getElementById("status");
+    const submitButton=document.getElementById("submit");
+    const reviewButton=document.getElementById("review");
+    const retryButton=document.getElementById("retry");
+    const resultCard=document.getElementById("result");
+    const scoreElement=document.getElementById("score");
+    const detailElement=document.getElementById("detail");
+    const messageElement=document.getElementById("message");
+
+    function shuffle(items){
+      const result=[...items];
+      for(let i=result.length-1;i>0;i-=1){
+        const j=Math.floor(Math.random()*(i+1));
+        [result[i],result[j]]=[result[j],result[i]];
+      }
+      return result;
+    }
+
+    function start(){
+      clearInterval(state.timer);
+      state.questions=shuffle(quizData).map(item=>({...item,o:shuffle(item.o)}));
+      state.seconds=50*60;
+      state.submitted=false;
+      state.missed=[];
+      resultCard.classList.remove("show");
+      reviewButton.hidden=true;
+      submitButton.disabled=false;
+      statusElement.textContent="In progress";
+      render();
+      updateProgress();
+      updateTimer();
+      state.timer=setInterval(tick,1000);
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    function render(){
+      form.innerHTML="";
+      state.questions.forEach((item,index)=>{
+        const card=document.createElement("section");
+        card.className="question";
+        card.dataset.index=index;
+        const heading=document.createElement("h2");
+        heading.innerHTML=`<span class="number">${index+1}.</span> `;
+        heading.append(document.createTextNode(item.q));
+        const options=document.createElement("div");
+        options.className="options";
+        item.o.forEach((text,optionIndex)=>{
+          const label=document.createElement("label");
+          label.className="option";
+          label.dataset.option=text;
+          const input=document.createElement("input");
+          input.type="radio";
+          input.name=`question-${index}`;
+          input.value=text;
+          input.id=`q-${index}-${optionIndex}`;
+          input.addEventListener("change",updateProgress);
+          const span=document.createElement("span");
+          span.textContent=text;
+          label.append(input,span);
+          options.append(label);
+        });
+        const explanation=document.createElement("div");
+        explanation.className="explanation";
+        explanation.textContent=item.e;
+        card.append(heading,options,explanation);
+        form.append(card);
+      });
+    }
+
+    function updateProgress(){
+      const answered=form.querySelectorAll('input:checked').length;
+      progressBar.style.width=`${answered/state.questions.length*100}%`;
+      progressLabel.textContent=`${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer(){
+      const minutes=Math.floor(state.seconds/60);
+      const seconds=state.seconds%60;
+      timerElement.textContent=`${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+      timerElement.classList.toggle("warning",state.seconds<=300);
+    }
+
+    function tick(){
+      state.seconds-=1;
+      updateTimer();
+      if(state.seconds<=0){
+        clearInterval(state.timer);
+        submitExam(true);
+      }
+    }
+
+    function submitExam(auto=false){
+      if(state.submitted)return;
+      const answered=form.querySelectorAll('input:checked').length;
+      if(!auto&&answered<state.questions.length){
+        const remaining=state.questions.length-answered;
+        if(!window.confirm(`${remaining} question(s) are unanswered. Submit anyway?`))return;
+      }
+
+      state.submitted=true;
+      clearInterval(state.timer);
+      state.missed=[];
+      let correct=0;
+
+      state.questions.forEach((item,index)=>{
+        const card=form.querySelector(`[data-index="${index}"]`);
+        const selected=card.querySelector('input:checked');
+        card.querySelectorAll(".option").forEach(label=>{
+          const option=label.dataset.option;
+          if(option===item.a)label.classList.add("correct");
+          if(selected&&option===selected.value&&selected.value!==item.a)label.classList.add("incorrect");
+        });
+        if(selected&&selected.value===item.a)correct+=1;
+        else state.missed.push(index);
+        card.querySelectorAll("input").forEach(input=>{input.disabled=true;});
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage=Math.round(correct/state.questions.length*100);
+      scoreElement.textContent=`${percentage}%`;
+      detailElement.textContent=`${correct} of ${state.questions.length} correct`;
+      if(percentage>=90)messageElement.textContent="Excellent — you can explain and apply Bash across beginner and advanced scenarios.";
+      else if(percentage>=80)messageElement.textContent="Passed — review missed explanations and repeat the related lab tasks.";
+      else if(percentage>=60)messageElement.textContent="Good progress — strengthen the weak topics before reattempting.";
+      else messageElement.textContent="Return to the study notes and labs, then rebuild the foundation step by step.";
+      statusElement.textContent=auto?"Time expired":"Submitted";
+      submitButton.disabled=true;
+      reviewButton.hidden=state.missed.length===0;
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+
+    function reviewMissed(){
+      form.querySelectorAll(".question").forEach(card=>{
+        card.hidden=!state.missed.includes(Number(card.dataset.index));
+      });
+      resultCard.classList.remove("show");
+      statusElement.textContent="Reviewing missed";
+      window.scrollTo({top:form.offsetTop-90,behavior:"smooth"});
+    }
+
+    submitButton.addEventListener("click",()=>submitExam(false));
+    reviewButton.addEventListener("click",reviewMissed);
+    retryButton.addEventListener("click",start);
+    start();
+  </script>
+</body>
+</html>

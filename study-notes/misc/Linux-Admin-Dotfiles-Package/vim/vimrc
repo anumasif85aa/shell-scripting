@@ -1,0 +1,35 @@
+syntax enable
+filetype plugin indent on
+set number
+set relativenumber
+set cursorline
+set showcmd
+set showmode
+set ruler
+set laststatus=2
+set autoindent
+set smartindent
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+set ignorecase
+set smartcase
+set incsearch
+set hlsearch
+set wildmenu
+set backspace=indent,eol,start
+set scrolloff=5
+set encoding=utf-8
+set fileformats=unix,dos
+set nobackup
+set nowritebackup
+set noswapfile
+set mouse=a
+highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
+nnoremap <F3> :nohlsearch<CR>
+nnoremap <F4> :set number! relativenumber!<CR>
+vnoremap < <gv
+vnoremap > >gv
+autocmd FileType sh setlocal tabstop=4 shiftwidth=4 expandtab

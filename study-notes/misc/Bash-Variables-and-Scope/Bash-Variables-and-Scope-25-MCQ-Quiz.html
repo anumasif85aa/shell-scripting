@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive 25-question Bash Variables and Scope quiz with timer, scoring, explanations, topic breakdown, and shuffled reattempts.">
+  <title>Bash Variables and Scope — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #020817;
+      --panel: #0b1729;
+      --panel-2: #10213a;
+      --border: #233c5d;
+      --text: #e7f1ff;
+      --muted: #9bb0ca;
+      --accent: #22d3ee;
+      --accent-2: #2dd4bf;
+      --warning: #fbbf24;
+      --success: #34d399;
+      --danger: #fb7185;
+      --shadow: 0 18px 48px rgb(0 0 0 / 35%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 5%, rgb(34 211 238 / 13%), transparent 28rem),
+        radial-gradient(circle at 90% 25%, rgb(45 212 191 / 9%), transparent 25rem),
+        var(--background);
+      line-height: 1.6;
+    }
+
+    code {
+      padding: 0.12rem 0.38rem;
+      border: 1px solid rgb(34 211 238 / 20%);
+      border-radius: 6px;
+      color: #b9f5ff;
+      background: #071426;
+      font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+      white-space: break-spaces;
+    }
+
+    .container {
+      width: min(1050px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 34px 0 54px;
+    }
+
+    .hero,
+    .toolbar,
+    .question-card,
+    .result-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgb(16 33 58 / 94%), rgb(7 19 36 / 96%));
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 6vw, 56px);
+      text-align: center;
+    }
+
+    .hero::before {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background:
+        linear-gradient(90deg, transparent 49.6%, rgb(34 211 238 / 5%) 50%, transparent 50.4%),
+        linear-gradient(transparent 49.6%, rgb(34 211 238 / 5%) 50%, transparent 50.4%);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    .hero > * {
+      position: relative;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-2);
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 4.8rem);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-description {
+      max-width: 760px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: 1.03rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .stat {
+      padding: 16px 10px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: rgb(2 8 23 / 52%);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--accent);
+      font-size: 1.15rem;
+    }
+
+    .toolbar {
+      position: sticky;
+      z-index: 20;
+      top: 10px;
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) auto auto;
+      align-items: center;
+      gap: 18px;
+      margin: 22px 0;
+      padding: 15px 18px;
+      backdrop-filter: blur(14px);
+    }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #050d1b;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 180ms ease;
+    }
+
+    .toolbar-label {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .timer {
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer.warning {
+      color: var(--warning);
+    }
+
+    .question-card {
+      margin: 18px 0;
+      padding: clamp(20px, 4vw, 30px);
+    }
+
+    .question-card.missed {
+      border-color: rgb(251 113 133 / 70%);
+    }
+
+    .question-card.hidden-by-review {
+      display: none;
+    }
+
+    .question-card h2 {
+      margin: 0;
+      font-size: clamp(1.03rem, 2.6vw, 1.3rem);
+      line-height: 1.5;
+    }
+
+    .question-number {
+      color: var(--accent-2);
+      font-weight: 950;
+    }
+
+    .topic-badge {
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 4px 10px;
+      border: 1px solid rgb(34 211 238 / 28%);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgb(34 211 238 / 7%);
+      font-size: 0.75rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .option {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgb(5 13 27 / 72%);
+      cursor: pointer;
+      transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+    }
+
+    .option:hover {
+      border-color: var(--accent);
+      background: rgb(15 41 67 / 80%);
+      transform: translateY(-1px);
+    }
+
+    .option.correct {
+      border-color: var(--success);
+      background: rgb(16 90 68 / 45%);
+    }
+
+    .option.incorrect {
+      border-color: var(--danger);
+      background: rgb(120 28 52 / 40%);
+    }
+
+    .option input {
+      margin-top: 5px;
+      accent-color: var(--accent);
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #071426;
+    }
+
+    .explanation.show {
+      display: block;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 12px 20px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      color: #03131d;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    }
+
+    .button.secondary {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--panel-2);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .button[hidden] {
+      display: none;
+    }
+
+    .result-card {
+      display: none;
+      margin: 20px 0;
+      padding: clamp(24px, 5vw, 40px);
+      text-align: center;
+    }
+
+    .result-card.show {
+      display: block;
+    }
+
+    .score {
+      color: var(--accent);
+      font-size: clamp(2.8rem, 9vw, 5.2rem);
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .result-message {
+      color: var(--muted);
+    }
+
+    .topic-results {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+      text-align: left;
+    }
+
+    .topic-result {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgb(2 8 23 / 55%);
+    }
+
+    .topic-result span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+    }
+
+    .topic-result strong {
+      color: var(--accent-2);
+      font-size: 1.08rem;
+    }
+
+    .warning {
+      color: var(--warning);
+      font-weight: 800;
+    }
+
+    footer {
+      padding-top: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--accent);
+    }
+
+    @media (max-width: 800px) {
+      .topic-results {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr auto;
+      }
+
+      .toolbar > div:first-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .container {
+        width: min(100% - 18px, 1050px);
+      }
+
+      .topic-results {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Variables and Scope</p>
+      <h1>25-MCQ Interactive Quiz</h1>
+      <p class="hero-description">
+        Test variables, global and local scope, function arguments, exported environment variables,
+        parent and child shells, subshell behavior, readonly values, and safe scripting practices.
+        Questions and answer choices are shuffled on every attempt.
+      </p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reviewButton" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+      <div class="topic-results" id="topicResults"></div>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan · Bash Variables and Scope Practice</p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        topic: "Fundamentals",
+        q: "Which line correctly assigns the value Ali Khan to a Bash variable?",
+        options: [
+          "student_name=\"Ali Khan\"",
+          "student_name = \"Ali Khan\"",
+          "$student_name=\"Ali Khan\"",
+          "set student_name \"Ali Khan\""
+        ],
+        answer: "student_name=\"Ali Khan\"",
+        explanation: "Bash assignments cannot contain spaces around =, and the variable name does not use $ during assignment."
+      },
+      {
+        topic: "Fundamentals",
+        q: "Why is \"$student_name\" normally safer than $student_name when the value is expanded?",
+        options: [
+          "Quotes preserve the value as one argument and protect spaces",
+          "Quotes automatically export the variable",
+          "Quotes convert the value into an integer",
+          "Quotes make the variable readonly"
+        ],
+        answer: "Quotes preserve the value as one argument and protect spaces",
+        explanation: "Double quotes prevent unintended word splitting and pathname expansion while still allowing variable expansion."
+      },
+      {
+        topic: "Fundamentals",
+        q: "What does it mean that Bash variable names are case-sensitive?",
+        options: [
+          "name and Name are different variables",
+          "All variable names must be uppercase",
+          "Variables can contain only lowercase letters",
+          "Bash converts every variable name to lowercase"
+        ],
+        answer: "name and Name are different variables",
+        explanation: "Capitalization matters in Bash, so name, Name, and NAME can hold different values."
+      },
+      {
+        topic: "Fundamentals",
+        q: "Which variable name is invalid in Bash?",
+        options: [
+          "1student",
+          "student1",
+          "student_name",
+          "STUDENT_NAME"
+        ],
+        answer: "1student",
+        explanation: "A Bash variable name cannot begin with a digit. Letters and underscores are valid starting characters."
+      },
+      {
+        topic: "Fundamentals",
+        q: "In Bash, what does variable scope describe?",
+        options: [
+          "Where a variable is available and accessible",
+          "How much disk space a variable consumes",
+          "Which editor created the script",
+          "How many commands the variable can execute"
+        ],
+        answer: "Where a variable is available and accessible",
+        explanation: "Scope defines the parts of the script, function, or process environment where a variable can be seen and used."
+      },
+      {
+        topic: "Global and Local",
+        q: "A variable created outside every function is normally what type of variable?",
+        options: [
+          "Global",
+          "Local",
+          "Readonly",
+          "Positional"
+        ],
+        answer: "Global",
+        explanation: "A variable assigned outside functions is normally visible throughout the script, including inside its functions."
+      },
+      {
+        topic: "Global and Local",
+        q: "Which keyword limits a variable to the function where it is declared?",
+        options: [
+          "local",
+          "export",
+          "readonly",
+          "unset"
+        ],
+        answer: "local",
+        explanation: "The local keyword creates a function-local variable and reduces unintended changes to global state."
+      },
+      {
+        topic: "Global and Local",
+        q: "What happens when a function assigns student=\"Ali\" without using local?",
+        options: [
+          "The variable can remain available globally after the function runs",
+          "The variable is automatically deleted at the closing brace",
+          "The assignment always produces a syntax error",
+          "The variable is automatically exported"
+        ],
+        answer: "The variable can remain available globally after the function runs",
+        explanation: "Bash function assignments are not automatically local. Without local, the assignment can create or modify a global variable."
+      },
+      {
+        topic: "Global and Local",
+        q: "Given global name=\"Khalid\" and local name=\"Ali\" inside a function, what is name after the function finishes?",
+        options: [
+          "Khalid",
+          "Ali",
+          "An empty string",
+          "The script terminates"
+        ],
+        answer: "Khalid",
+        explanation: "The function changes its local copy named name; the separate global value remains Khalid."
+      },
+      {
+        topic: "Global and Local",
+        q: "What is the main benefit of using local variables for temporary function data?",
+        options: [
+          "They reduce unintended global side effects",
+          "They run the function with root privileges",
+          "They automatically validate all input",
+          "They are inherited by every child process"
+        ],
+        answer: "They reduce unintended global side effects",
+        explanation: "Local variables reduce name conflicts and make functions easier to understand, reuse, test, and debug."
+      },
+      {
+        topic: "Function Arguments",
+        q: "Inside a function called as greet \"Ali\", what does $1 represent?",
+        options: [
+          "Ali, the function's first argument",
+          "The script filename",
+          "The number of function arguments",
+          "The first global variable"
+        ],
+        answer: "Ali, the function's first argument",
+        explanation: "During a function call, positional parameters temporarily refer to that function's own arguments."
+      },
+      {
+        topic: "Function Arguments",
+        q: "Which special parameter gives the number of arguments received by the current script or function?",
+        options: [
+          "$#",
+          "$0",
+          "$1",
+          "\"$@\""
+        ],
+        answer: "$#",
+        explanation: "$# expands to the count of positional parameters available in the current script or function context."
+      },
+      {
+        topic: "Function Arguments",
+        q: "Which expansion preserves all function arguments as separate values, including \"red cherry\"?",
+        options: [
+          "\"$@\"",
+          "\"$*\"",
+          "$#",
+          "$0"
+        ],
+        answer: "\"$@\"",
+        explanation: "Quoted $@ expands each positional argument separately, so an argument containing spaces stays intact."
+      },
+      {
+        topic: "Function Arguments",
+        q: "What is the practical difference between \"$@\" and \"$*\"?",
+        options: [
+          "\"$@\" preserves separate arguments; \"$*\" combines them into one string",
+          "\"$*\" preserves separate arguments; \"$@\" deletes spaces",
+          "They always behave identically in every context",
+          "\"$@\" counts arguments; \"$*\" returns the script name"
+        ],
+        answer: "\"$@\" preserves separate arguments; \"$*\" combines them into one string",
+        explanation: "When quoted, $@ keeps argument boundaries while $* represents all arguments as one combined word."
+      },
+      {
+        topic: "Function Arguments",
+        q: "Why declare local item before using for item in \"$@\" inside a function?",
+        options: [
+          "To prevent the loop variable from changing a global item variable",
+          "To export item to child processes",
+          "To make \"$@\" contain more arguments",
+          "To turn item into a readonly constant"
+        ],
+        answer: "To prevent the loop variable from changing a global item variable",
+        explanation: "Declaring temporary loop variables local prevents accidental changes to variables with the same name elsewhere."
+      },
+      {
+        topic: "Environment",
+        q: "What does export course=\"Bash Scripting\" do?",
+        options: [
+          "Makes course available to subsequently started child processes",
+          "Makes course local to the current function",
+          "Prevents course from being changed",
+          "Deletes course after the next command"
+        ],
+        answer: "Makes course available to subsequently started child processes",
+        explanation: "export places the variable in the environment inherited by child processes started afterward."
+      },
+      {
+        topic: "Environment",
+        q: "A normal variable is assigned but not exported. What will a new bash -c child normally see?",
+        options: [
+          "It will not receive that variable",
+          "It will always receive the variable",
+          "It will receive the variable as readonly",
+          "It will rename the variable automatically"
+        ],
+        answer: "It will not receive that variable",
+        explanation: "Ordinary shell variables remain in the current shell unless they are exported into the environment."
+      },
+      {
+        topic: "Environment",
+        q: "Can a child shell permanently change a variable in its parent shell?",
+        options: [
+          "No, it can change only its own copy",
+          "Yes, every child assignment updates the parent",
+          "Yes, but only when local is used",
+          "Yes, but only for readonly variables"
+        ],
+        answer: "No, it can change only its own copy",
+        explanation: "Environment inheritance goes from parent to child. Later child changes do not flow back into the parent process."
+      },
+      {
+        topic: "Environment",
+        q: "Which command displays the system's executable search path environment variable?",
+        options: [
+          "echo \"$PATH\"",
+          "echo \"$0\"",
+          "echo \"$#\"",
+          "echo \"$1\""
+        ],
+        answer: "echo \"$PATH\"",
+        explanation: "PATH is an environment variable containing the directories Bash searches for executable commands."
+      },
+      {
+        topic: "Environment",
+        q: "Which statement best describes the direction of exported-variable inheritance?",
+        options: [
+          "Parent to child",
+          "Child to parent",
+          "Only between unrelated shells",
+          "Only from a function to its caller"
+        ],
+        answer: "Parent to child",
+        explanation: "A child process inherits an environment copy from its parent; it cannot send later variable changes back automatically."
+      },
+      {
+        topic: "Subshell and Safety",
+        q: "What happens to a variable change made inside ( commands )?",
+        options: [
+          "The change does not return to the parent shell",
+          "The change always becomes global",
+          "The variable becomes readonly",
+          "The parent shell immediately exits"
+        ],
+        answer: "The change does not return to the parent shell",
+        explanation: "Parentheses create a subshell. Variable assignments there affect that subshell, not the parent shell's variable."
+      },
+      {
+        topic: "Subshell and Safety",
+        q: "How do { commands; } differ from ( commands ) for variable changes?",
+        options: [
+          "Braces run in the current shell, so changes remain",
+          "Braces always start a new child shell",
+          "Parentheses preserve changes, but braces do not",
+          "There is no difference in Bash"
+        ],
+        answer: "Braces run in the current shell, so changes remain",
+        explanation: "A brace group executes in the current shell; a parenthesized group executes in a subshell."
+      },
+      {
+        topic: "Subshell and Safety",
+        q: "Why does name=\"Ali\" inside result=$( ... ) not normally change the original name?",
+        options: [
+          "Command substitution normally runs in a subshell environment",
+          "Command substitution makes every variable local",
+          "The equals sign is ignored inside $()",
+          "The original variable is automatically readonly"
+        ],
+        answer: "Command substitution normally runs in a subshell environment",
+        explanation: "Command substitution captures stdout from a subshell-like environment, so internal assignments do not update the parent."
+      },
+      {
+        topic: "Subshell and Safety",
+        q: "Which declaration creates a local variable that cannot be reassigned inside its function?",
+        options: [
+          "local -r message=\"Hello\"",
+          "export message=\"Hello\"",
+          "unset message=\"Hello\"",
+          "local -x message=\"Hello\""
+        ],
+        answer: "local -r message=\"Hello\"",
+        explanation: "local limits the scope to the function, and -r applies the readonly attribute."
+      },
+      {
+        topic: "Subshell and Safety",
+        q: "Which command removes a function named greet from the current shell?",
+        options: [
+          "unset -f greet",
+          "unset greet",
+          "readonly greet",
+          "export -f greet"
+        ],
+        answer: "unset -f greet",
+        explanation: "unset -f removes a function definition. Plain unset is normally used to remove a variable."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false,
+      reviewMissedOnly: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+    const topicResults = document.getElementById("topicResults");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      state.reviewMissedOnly = false;
+      resultCard.classList.remove("show");
+      reviewButton.hidden = true;
+      reviewButton.textContent = "Review Missed Only";
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const topicBadge = document.createElement("span");
+        topicBadge.className = "topic-badge";
+        topicBadge.textContent = question.topic;
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+
+        card.append(heading, topicBadge, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function buildTopicResults(topicScores) {
+      topicResults.innerHTML = "";
+      Object.entries(topicScores).forEach(([topic, score]) => {
+        const item = document.createElement("div");
+        item.className = "topic-result";
+
+        const label = document.createElement("span");
+        label.textContent = topic;
+
+        const value = document.createElement("strong");
+        value.textContent = `${score.correct}/${score.total}`;
+
+        item.append(label, value);
+        topicResults.append(item);
+      });
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const unanswered = state.questions.length - answered;
+
+      if (!autoSubmitted && unanswered > 0) {
+        const proceed = window.confirm(
+          `${unanswered} question${unanswered === 1 ? " is" : "s are"} unanswered. Submit anyway?`
+        );
+        if (!proceed) return;
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      const topicScores = {};
+
+      state.questions.forEach((question, questionIndex) => {
+        if (!topicScores[question.topic]) {
+          topicScores[question.topic] = { correct: 0, total: 0 };
+        }
+        topicScores[question.topic].total += 1;
+
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+        const isCorrect = selected && selected.value === question.answer;
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) {
+            label.classList.add("correct");
+          }
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (isCorrect) {
+          correct += 1;
+          topicScores[question.topic].correct += 1;
+        } else {
+          card.classList.add("missed");
+        }
+
+        card.querySelectorAll("input").forEach((input) => {
+          input.disabled = true;
+        });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — you have a strong understanding of Bash variables and scope.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent = "Passed — review your missed explanations and repeat the related examples.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent = "Developing — revisit your weaker scope topics and reattempt the quiz.";
+      } else {
+        resultMessage.textContent = "Foundation review required — study the notes, practice the examples, and try again.";
+      }
+
+      buildTopicResults(topicScores);
+      submitButton.disabled = true;
+      reviewButton.hidden = correct === state.questions.length;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function toggleMissedReview() {
+      if (!state.submitted) return;
+      state.reviewMissedOnly = !state.reviewMissedOnly;
+
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        const shouldHide = state.reviewMissedOnly && !card.classList.contains("missed");
+        card.classList.toggle("hidden-by-review", shouldHide);
+      });
+
+      reviewButton.textContent = state.reviewMissedOnly ? "Show All Questions" : "Review Missed Only";
+
+      if (state.reviewMissedOnly) {
+        const firstMissed = quizForm.querySelector(".question-card.missed");
+        if (firstMissed) {
+          firstMissed.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reviewButton.addEventListener("click", toggleMissedReview);
+    reattemptButton.addEventListener("click", createAttempt);
+
+    createAttempt();
+  </script>
+</body>
+</html>

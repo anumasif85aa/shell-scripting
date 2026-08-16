@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bash Functions — 25 MCQ Quiz</title>
+    <style>
+        :root {
+            --navy: #07182d;
+            --panel: #102a46;
+            --panel-light: #163a5e;
+            --cyan: #35d3d0;
+            --amber: #ffbd4a;
+            --white: #f7fbff;
+            --muted: #b8cadb;
+            --green: #37d67a;
+            --red: #ff6874;
+            --shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--white);
+            background:
+                radial-gradient(circle at top right, #164b6d 0, transparent 34%),
+                linear-gradient(145deg, #061324, var(--navy));
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        .container {
+            width: min(1000px, 94%);
+            margin: 0 auto;
+            padding: 28px 0 60px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            letter-spacing: 0.02em;
+        }
+
+        header h1 span {
+            color: var(--cyan);
+        }
+
+        header p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .status-bar {
+            position: sticky;
+            top: 10px;
+            z-index: 20;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 18px;
+            background: rgba(10, 32, 55, 0.94);
+            border: 1px solid rgba(53, 211, 208, 0.3);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .status-item {
+            padding: 9px 12px;
+            text-align: center;
+            background: var(--panel-light);
+            border-radius: 10px;
+        }
+
+        .status-item small {
+            display: block;
+            color: var(--muted);
+            margin-bottom: 3px;
+        }
+
+        .status-item strong {
+            color: var(--amber);
+            font-size: 1.05rem;
+        }
+
+        .progress-track {
+            height: 8px;
+            margin: 0 0 22px;
+            overflow: hidden;
+            background: #17304d;
+            border-radius: 999px;
+        }
+
+        #progressBar {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            transition: width 0.25s ease;
+        }
+
+        .question-card {
+            margin-bottom: 18px;
+            padding: 22px;
+            background: rgba(16, 42, 70, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .question-title {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .question-number {
+            flex: 0 0 auto;
+            display: grid;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            color: var(--navy);
+            background: var(--cyan);
+            border-radius: 50%;
+        }
+
+        code {
+            padding: 2px 6px;
+            color: #fff1bd;
+            background: #07192d;
+            border-radius: 5px;
+            font-family: "Courier New", monospace;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 13px 14px;
+            cursor: pointer;
+            color: var(--white);
+            background: #0b2037;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: 0.18s ease;
+        }
+
+        .option:hover {
+            border-color: rgba(53, 211, 208, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .option input {
+            margin-top: 3px;
+            accent-color: var(--cyan);
+        }
+
+        .option.selected {
+            border-color: var(--cyan);
+            background: #12314f;
+        }
+
+        .option.correct {
+            border-color: var(--green);
+            background: rgba(55, 214, 122, 0.15);
+        }
+
+        .option.incorrect {
+            border-color: var(--red);
+            background: rgba(255, 104, 116, 0.15);
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            color: #dcf8f5;
+            background: rgba(53, 211, 208, 0.1);
+            border-left: 4px solid var(--cyan);
+            border-radius: 7px;
+            line-height: 1.5;
+        }
+
+        .explanation.visible {
+            display: block;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            min-width: 160px;
+            padding: 13px 18px;
+            color: #061324;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            background: var(--cyan);
+            border: 0;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        button.secondary {
+            color: var(--white);
+            background: var(--panel-light);
+            border: 1px solid var(--cyan);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        #resultPanel {
+            display: none;
+            margin: 25px 0;
+            padding: 25px;
+            text-align: center;
+            background: #0e2945;
+            border: 2px solid var(--amber);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        #resultPanel.visible {
+            display: block;
+        }
+
+        #resultPanel h2 {
+            margin-top: 0;
+            color: var(--amber);
+        }
+
+        .score-circle {
+            display: grid;
+            width: 130px;
+            height: 130px;
+            margin: 16px auto;
+            place-items: center;
+            color: var(--navy);
+            background: var(--amber);
+            border-radius: 50%;
+            font-size: 1.7rem;
+            font-weight: 900;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .result-grid div {
+            padding: 12px;
+            background: var(--panel-light);
+            border-radius: 10px;
+        }
+
+        footer {
+            margin-top: 30px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 680px) {
+            .status-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .question-card {
+                padding: 17px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>Bash Functions</span> — 25 MCQ Quiz</h1>
+            <p>From first function to reusable DevOps automation</p>
+        </header>
+
+        <section class="status-bar" aria-label="Quiz status">
+            <div class="status-item"><small>Questions</small><strong>25</strong></div>
+            <div class="status-item"><small>Answered</small><strong id="answeredCount">0</strong></div>
+            <div class="status-item"><small>Time Left</small><strong id="timer">25:00</strong></div>
+            <div class="status-item"><small>Passing Score</small><strong>80%</strong></div>
+        </section>
+
+        <div class="progress-track" aria-label="Answer progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <main id="quiz"></main>
+
+        <section id="resultPanel" aria-live="polite">
+            <h2 id="resultTitle">Quiz Result</h2>
+            <div class="score-circle" id="scoreCircle">0%</div>
+            <p id="resultMessage"></p>
+            <div class="result-grid">
+                <div>Correct: <strong id="correctResult">0</strong></div>
+                <div>Incorrect: <strong id="incorrectResult">0</strong></div>
+                <div>Unanswered: <strong id="unansweredResult">0</strong></div>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button id="submitButton" type="button">Submit Quiz</button>
+            <button id="reattemptButton" class="secondary" type="button" hidden>
+                Reattempt &amp; Shuffle
+            </button>
+        </div>
+
+        <footer>
+            Answers and explanations appear after submission. Questions and
+            answer choices shuffle on every reattempt.
+        </footer>
+    </div>
+
+    <script>
+        const questionBank = [
+            {
+                q: "What is the main purpose of a Bash function?",
+                options: [
+                    "To store a reusable block of commands",
+                    "To install the Bash shell",
+                    "To create a new Linux user automatically",
+                    "To replace every loop"
+                ],
+                answer: 0,
+                explanation: "A function gives a name to a reusable block of commands."
+            },
+            {
+                q: "Which is valid syntax for defining a Bash function?",
+                options: [
+                    "greet() { echo \"Hello\"; }",
+                    "greet[] { echo \"Hello\"; }",
+                    "function = greet echo \"Hello\"",
+                    "define greet: echo \"Hello\""
+                ],
+                answer: 0,
+                explanation: "The name, parentheses, and braced command body form a valid function definition."
+            },
+            {
+                q: "How do you correctly call a function named <code>greet</code>?",
+                options: ["greet", "greet()", "call greet", "run(greet)"],
+                answer: 0,
+                explanation: "Call a Bash function by writing its name without parentheses."
+            },
+            {
+                q: "Why is a function normally defined before it is called?",
+                options: [
+                    "Bash must know the function before executing its name",
+                    "Functions can only run on the first script line",
+                    "The shebang defines every function automatically",
+                    "Calling first changes the function into a variable"
+                ],
+                answer: 0,
+                explanation: "A top-to-bottom script must encounter the definition before the call."
+            },
+            {
+                q: "Inside a function, what does <code>$1</code> represent?",
+                options: [
+                    "The function's first argument",
+                    "The function name",
+                    "The last exit status",
+                    "The total number of functions"
+                ],
+                answer: 0,
+                explanation: "$1 is the first positional argument passed to the function."
+            },
+            {
+                q: "Inside a function, what does <code>$#</code> contain?",
+                options: [
+                    "The number of function arguments",
+                    "All arguments as one string",
+                    "The process ID",
+                    "The script's exit status"
+                ],
+                answer: 0,
+                explanation: "$# reports how many positional arguments the function received."
+            },
+            {
+                q: "Which expansion safely keeps all function arguments as separate values?",
+                options: ["\"$@\"", "\"$*\"", "$?", "$$"],
+                answer: 0,
+                explanation: "Quoted \"$@\" preserves every argument separately, including values containing spaces."
+            },
+            {
+                q: "What is the purpose of <code>local name=\"Ali\"</code> inside a function?",
+                options: [
+                    "Limit the variable to that function call",
+                    "Export the variable to every process",
+                    "Make the variable global",
+                    "Delete the variable immediately"
+                ],
+                answer: 0,
+                explanation: "local reduces accidental changes to variables outside the function."
+            },
+            {
+                q: "What is the difference between <code>echo</code> and <code>return</code> in a function?",
+                options: [
+                    "echo produces text; return reports a numeric status",
+                    "echo ends the script; return prints a paragraph",
+                    "They always perform exactly the same action",
+                    "return can only display filenames"
+                ],
+                answer: 0,
+                explanation: "Function data or messages usually use output; success or failure uses return status."
+            },
+            {
+                q: "What does <code>return 0</code> normally mean?",
+                options: ["Success", "Failure", "Repeat the function", "Restart Bash"],
+                answer: 0,
+                explanation: "Like command exit status, zero means success."
+            },
+            {
+                q: "If a function has no explicit <code>return</code>, which status does it normally return?",
+                options: [
+                    "The status of its last executed command",
+                    "Always 0",
+                    "Always 1",
+                    "The number of arguments"
+                ],
+                answer: 0,
+                explanation: "A function normally inherits the exit status of its final command."
+            },
+            {
+                q: "Which command should normally stop only the current function?",
+                options: ["return", "exit", "break 10", "logout"],
+                answer: 0,
+                explanation: "return leaves the function; exit terminates the complete script."
+            },
+            {
+                q: "How can a function named <code>check_file</code> be tested directly?",
+                options: [
+                    "if check_file \"data.txt\"; then echo \"Found\"; fi",
+                    "if $check_file = data.txt",
+                    "check if function data.txt",
+                    "if (return check_file)"
+                ],
+                answer: 0,
+                explanation: "if evaluates the success or failure status returned by the function."
+            },
+            {
+                q: "Which statement captures the standard output of <code>get_name</code>?",
+                options: [
+                    "name=\"$(get_name)\"",
+                    "name=\"$get_name\"",
+                    "name=\"${get_name[]}\"",
+                    "capture get_name as name"
+                ],
+                answer: 0,
+                explanation: "Command substitution $(...) captures standard output."
+            },
+            {
+                q: "What does <code>local name=\"${1:-Guest}\"</code> do?",
+                options: [
+                    "Uses the first argument or Guest when it is missing or empty",
+                    "Always changes the first argument to Guest",
+                    "Deletes the first argument",
+                    "Checks whether Guest is a command"
+                ],
+                answer: 0,
+                explanation: "The :- expansion supplies a default for an unset or empty value."
+            },
+            {
+                q: "Which command loads functions from <code>functions.sh</code> into the current shell?",
+                options: [
+                    "source \"./functions.sh\"",
+                    "bash -n functions.sh",
+                    "chmod functions.sh",
+                    "echo functions.sh"
+                ],
+                answer: 0,
+                explanation: "source executes the file in the current shell, making its functions available."
+            },
+            {
+                q: "What does <code>bash -n script.sh</code> do?",
+                options: [
+                    "Checks Bash syntax without normally executing commands",
+                    "Runs the script as root",
+                    "Counts all functions",
+                    "Renames the script"
+                ],
+                answer: 0,
+                explanation: "The -n option reads commands for syntax validation without normal execution."
+            },
+            {
+                q: "Which command lists the names of currently defined Bash functions?",
+                options: ["declare -F", "functions -l", "ls -f", "echo -F"],
+                answer: 0,
+                explanation: "declare -F displays defined function names."
+            },
+            {
+                q: "A script receives <code>apple</code>, but calls <code>greet \"Omar\"</code>. What is <code>$1</code> inside <code>greet</code>?",
+                options: ["Omar", "apple", "greet", "The script name"],
+                answer: 0,
+                explanation: "Inside the call, positional parameters refer to the function's arguments."
+            },
+            {
+                q: "Which range can a Bash function return as a status code?",
+                options: ["0 through 255", "Only 0 and 1", "Any text string", "-999 through 999"],
+                answer: 0,
+                explanation: "Bash command and function statuses are represented in the 0–255 range."
+            },
+            {
+                q: "Which function correctly sends an error message to standard error?",
+                options: [
+                    "log_error() { echo \"[ERROR] $*\" >&2; }",
+                    "log_error() { echo \"[ERROR] $*\" >0; }",
+                    "log_error() { return \"[ERROR]\"; }",
+                    "log_error() { stderr = \"$*\"; }"
+                ],
+                answer: 0,
+                explanation: "The >&2 redirection sends echo output to standard error."
+            },
+            {
+                q: "Why might a larger script end with <code>main \"$@\"</code>?",
+                options: [
+                    "To pass all script arguments safely into the main function",
+                    "To print every environment variable",
+                    "To make main a Linux user",
+                    "To disable positional parameters"
+                ],
+                answer: 0,
+                explanation: "Quoted \"$@\" forwards each original script argument to main."
+            },
+            {
+                q: "What does <code>trap cleanup EXIT</code> arrange?",
+                options: [
+                    "Call cleanup when the script exits",
+                    "Exit every loop named cleanup",
+                    "Delete the cleanup function",
+                    "Run cleanup only when syntax is invalid"
+                ],
+                answer: 0,
+                explanation: "The EXIT trap invokes cleanup when the shell script finishes."
+            },
+            {
+                q: "What does <code>[[ -f \"$1\" ]]</code> check?",
+                options: [
+                    "Whether the first argument names an existing regular file",
+                    "Whether the first argument is a function",
+                    "Whether the file is a directory",
+                    "Whether the first argument is empty text only"
+                ],
+                answer: 0,
+                explanation: "-f succeeds when the path exists and is a regular file."
+            },
+            {
+                q: "Which is the clearest function name for checking a configuration file?",
+                options: ["validate_config", "do_it", "abc", "thing2"],
+                answer: 0,
+                explanation: "Action-based descriptive names make scripts easier to understand and maintain."
+            }
+        ];
+
+        let activeQuestions = [];
+        let submitted = false;
+        let remainingSeconds = 25 * 60;
+        let timerId = null;
+
+        const quiz = document.getElementById("quiz");
+        const answeredCount = document.getElementById("answeredCount");
+        const progressBar = document.getElementById("progressBar");
+        const timer = document.getElementById("timer");
+        const submitButton = document.getElementById("submitButton");
+        const reattemptButton = document.getElementById("reattemptButton");
+        const resultPanel = document.getElementById("resultPanel");
+
+        function shuffle(items) {
+            const copy = [...items];
+
+            for (let index = copy.length - 1; index > 0; index--) {
+                const randomIndex = Math.floor(Math.random() * (index + 1));
+                [copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]];
+            }
+
+            return copy;
+        }
+
+        function prepareQuestions() {
+            const prepared = questionBank.map((question, originalIndex) => {
+                const optionObjects = question.options.map((text, optionIndex) => ({
+                    text,
+                    correct: optionIndex === question.answer
+                }));
+
+                return {
+                    ...question,
+                    originalIndex,
+                    shuffledOptions: shuffle(optionObjects)
+                };
+            });
+
+            return shuffle(prepared);
+        }
+
+        function renderQuiz() {
+            quiz.innerHTML = "";
+
+            activeQuestions.forEach((question, questionIndex) => {
+                const card = document.createElement("section");
+                card.className = "question-card";
+                card.dataset.question = questionIndex;
+
+                const title = document.createElement("div");
+                title.className = "question-title";
+                title.innerHTML = `
+                    <span class="question-number">${questionIndex + 1}</span>
+                    <span>${question.q}</span>
+                `;
+                card.appendChild(title);
+
+                const options = document.createElement("div");
+                options.className = "options";
+
+                question.shuffledOptions.forEach((option, optionIndex) => {
+                    const label = document.createElement("label");
+                    label.className = "option";
+                    label.innerHTML = `
+                        <input type="radio" name="question-${questionIndex}"
+                            value="${optionIndex}">
+                        <span>${option.text}</span>
+                    `;
+
+                    label.querySelector("input").addEventListener("change", () => {
+                        card.querySelectorAll(".option").forEach(item => {
+                            item.classList.remove("selected");
+                        });
+                        label.classList.add("selected");
+                        updateProgress();
+                    });
+
+                    options.appendChild(label);
+                });
+
+                card.appendChild(options);
+
+                const explanation = document.createElement("div");
+                explanation.className = "explanation";
+                explanation.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
+                card.appendChild(explanation);
+                quiz.appendChild(card);
+            });
+        }
+
+        function updateProgress() {
+            const answered = quiz.querySelectorAll("input[type='radio']:checked").length;
+            answeredCount.textContent = answered;
+            progressBar.style.width = `${(answered / questionBank.length) * 100}%`;
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timer.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+            if (remainingSeconds <= 0) {
+                clearInterval(timerId);
+                submitQuiz(true);
+                return;
+            }
+
+            remainingSeconds--;
+        }
+
+        function startTimer() {
+            clearInterval(timerId);
+            updateTimer();
+            timerId = setInterval(updateTimer, 1000);
+        }
+
+        function submitQuiz(timeExpired = false) {
+            if (submitted) {
+                return;
+            }
+
+            const answered = quiz.querySelectorAll("input[type='radio']:checked").length;
+            const unanswered = questionBank.length - answered;
+
+            if (!timeExpired && unanswered > 0) {
+                const proceed = window.confirm(
+                    `You have ${unanswered} unanswered question(s). Submit anyway?`
+                );
+
+                if (!proceed) {
+                    return;
+                }
+            }
+
+            submitted = true;
+            clearInterval(timerId);
+
+            let correct = 0;
+
+            activeQuestions.forEach((question, questionIndex) => {
+                const card = quiz.querySelector(`[data-question="${questionIndex}"]`);
+                const selected = card.querySelector("input:checked");
+                const labels = card.querySelectorAll(".option");
+
+                labels.forEach((label, optionIndex) => {
+                    const option = question.shuffledOptions[optionIndex];
+                    const input = label.querySelector("input");
+                    input.disabled = true;
+
+                    if (option.correct) {
+                        label.classList.add("correct");
+                    }
+
+                    if (selected && Number(selected.value) === optionIndex && !option.correct) {
+                        label.classList.add("incorrect");
+                    }
+                });
+
+                if (
+                    selected &&
+                    question.shuffledOptions[Number(selected.value)].correct
+                ) {
+                    correct++;
+                }
+
+                card.querySelector(".explanation").classList.add("visible");
+            });
+
+            const incorrect = answered - correct;
+            const percentage = Math.round((correct / questionBank.length) * 100);
+            const passed = percentage >= 80;
+
+            document.getElementById("scoreCircle").textContent = `${percentage}%`;
+            document.getElementById("correctResult").textContent = correct;
+            document.getElementById("incorrectResult").textContent = incorrect;
+            document.getElementById("unansweredResult").textContent = unanswered;
+            document.getElementById("resultTitle").textContent =
+                passed ? "Excellent — Quiz Passed" : "Keep Practising";
+            document.getElementById("resultMessage").textContent = timeExpired
+                ? `Time expired. You scored ${correct} out of ${questionBank.length}.`
+                : `You scored ${correct} out of ${questionBank.length}. ${
+                    passed ? "You reached the passing score." : "Review the explanations and try again."
+                }`;
+
+            resultPanel.classList.add("visible");
+            submitButton.disabled = true;
+            reattemptButton.hidden = false;
+            resultPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        function beginAttempt() {
+            submitted = false;
+            remainingSeconds = 25 * 60;
+            activeQuestions = prepareQuestions();
+            resultPanel.classList.remove("visible");
+            submitButton.disabled = false;
+            reattemptButton.hidden = true;
+            renderQuiz();
+            updateProgress();
+            startTimer();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        submitButton.addEventListener("click", () => submitQuiz(false));
+        reattemptButton.addEventListener("click", beginAttempt);
+        beginAttempt();
+    </script>
+</body>
+</html>

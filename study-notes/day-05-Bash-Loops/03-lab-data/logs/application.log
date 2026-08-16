@@ -1,0 +1,5 @@
+2026-07-27 09:00:01 INFO Application started
+2026-07-27 09:02:18 INFO User login successful
+2026-07-27 09:05:42 ERROR Database connection timed out
+2026-07-27 09:06:05 INFO Database connection restored
+2026-07-27 09:15:11 ERROR Payment request failed validation

@@ -1,0 +1,6 @@
+service,status
+web,enabled
+api,enabled
+worker,disabled
+database,enabled
+

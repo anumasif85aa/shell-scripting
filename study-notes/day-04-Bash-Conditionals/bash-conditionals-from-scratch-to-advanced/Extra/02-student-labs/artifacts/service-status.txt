@@ -1,0 +1,3 @@
+nginx:running
+mysql:stopped
+ssh:running

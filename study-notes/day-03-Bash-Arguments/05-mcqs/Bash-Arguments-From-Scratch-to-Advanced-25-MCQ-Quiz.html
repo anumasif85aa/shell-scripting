@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Bash arguments quiz with timer, scoring, shuffled choices, missed-question review, and explanations.">
+  <title>Bash Arguments — From Scratch to Advanced 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      line-height: 1.12;
+    }
+
+    .hero p:not(.eyebrow) {
+      max-width: 800px;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-top: 5px;
+    }
+
+    .timer {
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .question-card {
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .question-card.hidden-review { display: none; }
+
+    .level {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 3px 9px;
+      border: 1px solid rgb(79 209 197 / 45%);
+      border-radius: 999px;
+      color: #bdfbf5;
+      background: rgb(13 74 79 / 35%);
+      font-size: .7rem;
+      font-weight: 750;
+    }
+
+    .question-card h2 {
+      margin: 0 0 16px;
+      font-size: 1.05rem;
+    }
+
+    .question-number {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-2);
+    }
+
+    .option:has(input:checked) {
+      background: #12334b;
+      border-color: var(--accent);
+    }
+
+    .option.correct {
+      background: rgb(16 90 68 / 45%);
+      border-color: var(--success);
+    }
+
+    .option.incorrect {
+      background: rgb(120 28 52 / 40%);
+      border-color: var(--danger);
+    }
+
+    .option input {
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #03131d;
+      background: linear-gradient(135deg, var(--accent), #7dd3fc);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .button[hidden] { display: none; }
+
+    .result-card {
+      display: none;
+      padding: 26px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .result-card.show { display: block; }
+
+    .score {
+      font-size: clamp(2.4rem, 8vw, 4.8rem);
+      font-weight: 950;
+      color: var(--accent);
+    }
+
+    .result-message { color: var(--muted); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      width: min(620px, 100%);
+      margin: 20px auto 0;
+    }
+
+    .result-grid div {
+      padding: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding-top: 24px;
+    }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+      .result-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Positional Parameters</p>
+      <h1>Bash Arguments — 25 MCQ Quiz</h1>
+      <p>Progress from basic positional parameters to validation, loops,
+        <code>shift</code>, named options, <code>getopts</code>, and safe
+        automation interfaces. Questions and answers shuffle on every attempt.</p>
+
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reviewButton" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt &amp; Shuffle</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+
+      <div class="result-grid">
+        <div>Correct<br><strong id="correctCount">0</strong></div>
+        <div>Incorrect<br><strong id="incorrectCount">0</strong></div>
+        <div>Unanswered<br><strong id="unansweredCount">0</strong></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan · Bash Arguments Learning Package</p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        level: "Foundation",
+        q: "What is a command-line argument?",
+        options: [
+          "A value supplied when a command or script is started",
+          "A Bash comment beginning with #",
+          "A file descriptor used only for errors",
+          "A Linux user password"
+        ],
+        answer: "A value supplied when a command or script is started",
+        explanation: "Arguments let the same script operate with different values."
+      },
+      {
+        level: "Foundation",
+        q: "What does $0 normally represent inside a script?",
+        options: [
+          "The script name or invocation path",
+          "The first user argument",
+          "The number of arguments",
+          "The current user's UID"
+        ],
+        answer: "The script name or invocation path",
+        explanation: "$0 identifies how the script or current shell was invoked."
+      },
+      {
+        level: "Foundation",
+        q: "The command ./fruit.sh apple is executed. What is $1?",
+        options: ["apple", "./fruit.sh", "1", "fruit"],
+        answer: "apple",
+        explanation: "The first value after the script name becomes $1."
+      },
+      {
+        level: "Foundation",
+        q: "What does $# contain?",
+        options: [
+          "The number of positional arguments",
+          "All arguments as one string",
+          "The last command's status",
+          "The shell process ID"
+        ],
+        answer: "The number of positional arguments",
+        explanation: "$# is commonly used to validate how many values were supplied."
+      },
+      {
+        level: "Foundation",
+        q: "Which expansion safely preserves all arguments as separate values?",
+        options: ["\"$@\"", "\"$*\"", "$?", "$$"],
+        answer: "\"$@\"",
+        explanation: "Quoted \"$@\" keeps every argument separate, including values containing spaces."
+      },
+      {
+        level: "Foundation",
+        q: "When quoted, what does \"$*\" normally produce?",
+        options: [
+          "One combined value containing all arguments",
+          "Only the first argument",
+          "Only the argument count",
+          "Zero values in every case"
+        ],
+        answer: "One combined value containing all arguments",
+        explanation: "Quoted \"$*\" joins the positional parameters into one word."
+      },
+      {
+        level: "Foundation",
+        q: "How should red apple be passed as one argument?",
+        options: [
+          "./fruit.sh \"red apple\"",
+          "./fruit.sh red apple",
+          "./fruit.sh [red apple]",
+          "./fruit.sh {red apple}"
+        ],
+        answer: "./fruit.sh \"red apple\"",
+        explanation: "Quotes keep both words together as one positional argument."
+      },
+      {
+        level: "Foundation",
+        q: "Which syntax correctly accesses the tenth argument?",
+        options: ["${10}", "$10", "$(10)", "$[10]"],
+        answer: "${10}",
+        explanation: "Braces are required for positional parameters numbered ten and above."
+      },
+      {
+        level: "Intermediate",
+        q: "Which condition detects that exactly two arguments were not supplied?",
+        options: [
+          "[[ $# -ne 2 ]]",
+          "[[ $1 -ne 2 ]]",
+          "[[ \"$@\" = 2 ]]",
+          "[[ $? -ne 2 ]]"
+        ],
+        answer: "[[ $# -ne 2 ]]",
+        explanation: "-ne means not numerically equal, and $# is the argument count."
+      },
+      {
+        level: "Intermediate",
+        q: "What does fruit=\"${1:-apple}\" do?",
+        options: [
+          "Use $1 or apple when $1 is missing or empty",
+          "Always replace $1 with apple",
+          "Delete the first argument",
+          "Subtract apple from $1"
+        ],
+        answer: "Use $1 or apple when $1 is missing or empty",
+        explanation: "The :- expansion supplies a default for an unset or empty value."
+      },
+      {
+        level: "Intermediate",
+        q: "What does file=\"${1:?Usage: script FILE}\" do when $1 is missing?",
+        options: [
+          "Display the message and stop the current shell or script expansion",
+          "Create a file named Usage",
+          "Assign an empty value silently",
+          "Use FILE as a default without an error"
+        ],
+        answer: "Display the message and stop the current shell or script expansion",
+        explanation: "The :? form requires a non-empty value and reports the supplied error message."
+      },
+      {
+        level: "Intermediate",
+        q: "Which condition accepts positive and negative whole numbers?",
+        options: [
+          "[[ \"$1\" =~ ^-?[0-9]+$ ]]",
+          "[[ \"$1\" = number ]]",
+          "[[ -f \"$1\" ]]",
+          "[[ \"$1\" =~ letters ]]"
+        ],
+        answer: "[[ \"$1\" =~ ^-?[0-9]+$ ]]",
+        explanation: "The optional minus sign and one-or-more digits match a whole number."
+      },
+      {
+        level: "Intermediate",
+        q: "Which test confirms that $1 names an existing regular file?",
+        options: [
+          "[[ -f \"$1\" ]]",
+          "[[ -d \"$1\" ]]",
+          "[[ -x \"$#\" ]]",
+          "[[ \"$1\" -eq file ]]"
+        ],
+        answer: "[[ -f \"$1\" ]]",
+        explanation: "-f succeeds when the path exists and is a regular file."
+      },
+      {
+        level: "Intermediate",
+        q: "Which loop header is safest for processing every argument?",
+        options: [
+          "for value in \"$@\"",
+          "for value in $@",
+          "for value in \"$*\"",
+          "for value at arguments"
+        ],
+        answer: "for value in \"$@\"",
+        explanation: "Quoted \"$@\" preserves argument boundaries and spaces."
+      },
+      {
+        level: "Intermediate",
+        q: "What does one shift command do?",
+        options: [
+          "Remove $1 and move the remaining parameters left",
+          "Move $1 to the final position",
+          "Convert all arguments into an array",
+          "Delete every argument immediately"
+        ],
+        answer: "Remove $1 and move the remaining parameters left",
+        explanation: "After shift, the old $2 becomes $1, the old $3 becomes $2, and so on."
+      },
+      {
+        level: "Intermediate",
+        q: "What does shift 2 do?",
+        options: [
+          "Remove the first two positional parameters",
+          "Move the second argument into $0",
+          "Repeat shift twice without changing arguments",
+          "Require exactly two arguments"
+        ],
+        answer: "Remove the first two positional parameters",
+        explanation: "A numeric operand tells shift how many positional parameters to remove."
+      },
+      {
+        level: "Intermediate",
+        q: "What does set -- apple banana do?",
+        options: [
+          "Replace the current positional parameters with apple and banana",
+          "Create two environment variables",
+          "Disable all script options",
+          "Run apple and banana as commands"
+        ],
+        answer: "Replace the current positional parameters with apple and banana",
+        explanation: "set -- assigns a new positional-parameter list."
+      },
+      {
+        level: "Advanced",
+        q: "Why is -- used in cp -- \"$source\" \"$destination\"?",
+        options: [
+          "Mark the end of command options",
+          "Join source and destination",
+          "Enable recursive copying",
+          "Send errors to stderr"
+        ],
+        answer: "Mark the end of command options",
+        explanation: "-- prevents a filename beginning with - from being treated as an option."
+      },
+      {
+        level: "Advanced",
+        q: "Inside a function called as show banana, what does $1 mean?",
+        options: [
+          "The function's first argument, banana",
+          "The script's first argument in every case",
+          "The function name",
+          "The script's argument count"
+        ],
+        answer: "The function's first argument, banana",
+        explanation: "A function temporarily receives its own positional parameters."
+      },
+      {
+        level: "Advanced",
+        q: "Which statement safely stores all arguments in an array?",
+        options: [
+          "arguments=(\"$@\")",
+          "arguments=\"$@\"",
+          "arguments=($*)",
+          "arguments=$#"
+        ],
+        answer: "arguments=(\"$@\")",
+        explanation: "The quoted expansion preserves every original argument as one array element."
+      },
+      {
+        level: "Advanced",
+        q: "Which Bash construct is commonly used to parse manual long options such as --env?",
+        options: [
+          "A while loop with case and shift",
+          "Only a for loop over characters",
+          "The readonly command",
+          "The umask command"
+        ],
+        answer: "A while loop with case and shift",
+        explanation: "case identifies each option, while shift removes processed option/value pairs."
+      },
+      {
+        level: "Advanced",
+        q: "What is getopts designed to parse?",
+        options: [
+          "Short command-line options",
+          "Configuration-file permissions",
+          "Standard error messages",
+          "Long filenames only"
+        ],
+        answer: "Short command-line options",
+        explanation: "getopts provides built-in parsing for options such as -a, -e, and -v."
+      },
+      {
+        level: "Advanced",
+        q: "What does OPTARG contain during getopts processing?",
+        options: [
+          "The value belonging to the current option",
+          "The script name",
+          "The total argument count",
+          "The most recent exit status"
+        ],
+        answer: "The value belonging to the current option",
+        explanation: "For an option requiring a value, getopts places that value in OPTARG."
+      },
+      {
+        level: "Advanced",
+        q: "Why is shift $((OPTIND - 1)) commonly used after getopts?",
+        options: [
+          "Remove the options already processed by getopts",
+          "Reset the script name",
+          "Move stderr to stdout",
+          "Convert options into environment variables"
+        ],
+        answer: "Remove the options already processed by getopts",
+        explanation: "OPTIND points to the next unprocessed argument; shifting exposes remaining operands."
+      },
+      {
+        level: "Advanced",
+        q: "Why should passwords normally not be passed directly as command-line arguments?",
+        options: [
+          "They may be visible in process listings and shell history",
+          "Bash automatically converts them to numbers",
+          "Arguments cannot contain special characters",
+          "Passwords always become environment variables"
+        ],
+        answer: "They may be visible in process listings and shell history",
+        explanation: "Use secure prompts, protected files, or a secret-management system for sensitive values."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false,
+      reviewMissedOnly: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+    const correctCount = document.getElementById("correctCount");
+    const incorrectCount = document.getElementById("incorrectCount");
+    const unansweredCount = document.getElementById("unansweredCount");
+
+    function shuffle(items) {
+      const result = [...items];
+
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      state.reviewMissedOnly = false;
+
+      resultCard.classList.remove("show");
+      submitButton.disabled = false;
+      reviewButton.hidden = true;
+      reviewButton.textContent = "Review Missed Only";
+      statusLabel.textContent = "In progress";
+
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const level = document.createElement("span");
+        level.className = "level";
+        level.textContent = question.level;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = `Explanation: ${question.explanation}`;
+
+        card.append(level, heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent =
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const answeredBeforeSubmit =
+        quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const remaining = state.questions.length - answeredBeforeSubmit;
+
+      if (!autoSubmitted && remaining > 0) {
+        const confirmed = window.confirm(
+          `You have ${remaining} unanswered question(s). Submit anyway?`
+        );
+
+        if (!confirmed) return;
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      let answered = 0;
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+        let questionCorrect = false;
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+
+          if (option === question.answer) {
+            label.classList.add("correct");
+          }
+
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (selected) {
+          answered += 1;
+
+          if (selected.value === question.answer) {
+            correct += 1;
+            questionCorrect = true;
+          }
+        }
+
+        card.dataset.correct = questionCorrect ? "true" : "false";
+        card.querySelectorAll("input").forEach((input) => {
+          input.disabled = true;
+        });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const incorrect = answered - correct;
+      const unanswered = state.questions.length - answered;
+      const percentage = Math.round((correct / state.questions.length) * 100);
+
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+      correctCount.textContent = correct;
+      incorrectCount.textContent = incorrect;
+      unansweredCount.textContent = unanswered;
+
+      if (percentage >= 90) {
+        resultMessage.textContent =
+          "Excellent — you can design flexible and safe argument-driven Bash scripts.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent =
+          "Passed — review missed explanations and repeat the related lab tasks.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent =
+          "Developing — revisit validation, quoting, shift, and option parsing.";
+      } else {
+        resultMessage.textContent =
+          "Foundation review required — practise positional parameters before reattempting.";
+      }
+
+      submitButton.disabled = true;
+      reviewButton.hidden = false;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function toggleMissedReview() {
+      if (!state.submitted) return;
+
+      state.reviewMissedOnly = !state.reviewMissedOnly;
+
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        const hide = state.reviewMissedOnly && card.dataset.correct === "true";
+        card.classList.toggle("hidden-review", hide);
+      });
+
+      reviewButton.textContent = state.reviewMissedOnly
+        ? "Show All Questions"
+        : "Review Missed Only";
+
+      if (state.reviewMissedOnly) {
+        quizForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    reviewButton.addEventListener("click", toggleMissedReview);
+    createAttempt();
+  </script>
+</body>
+</html>

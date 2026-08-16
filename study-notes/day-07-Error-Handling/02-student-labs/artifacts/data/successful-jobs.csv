@@ -1,0 +1,4 @@
+job,failures_before_success
+collect-metrics,0
+check-api,2
+

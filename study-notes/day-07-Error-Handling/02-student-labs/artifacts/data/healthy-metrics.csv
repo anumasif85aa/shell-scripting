@@ -1,0 +1,5 @@
+server,cpu,memory,disk
+web-01,35,62,70
+api-01,44,68,72
+db-01,52,73,75
+

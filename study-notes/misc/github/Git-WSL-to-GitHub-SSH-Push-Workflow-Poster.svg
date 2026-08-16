@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="3000" viewBox="0 0 1800 3000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071426"/>
+      <stop offset="0.55" stop-color="#0d1f3a"/>
+      <stop offset="1" stop-color="#11142e"/>
+    </linearGradient>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="0.5" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="success" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#059669"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#75a7dc" stroke-width="1" opacity="0.08"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#020617" flood-opacity="0.48"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#38bdf8"/>
+    </marker>
+    <style>
+      .title { font-family: Arial, Helvetica, sans-serif; font-size: 72px; font-weight: 800; fill: #ffffff; letter-spacing: 1px; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 34px; font-weight: 500; fill: #dbeafe; }
+      .phase { font-family: Arial, Helvetica, sans-serif; font-size: 29px; font-weight: 800; fill: #ffffff; letter-spacing: 2px; }
+      .card-title { font-family: Arial, Helvetica, sans-serif; font-size: 36px; font-weight: 800; fill: #f8fafc; }
+      .body { font-family: Arial, Helvetica, sans-serif; font-size: 26px; font-weight: 500; fill: #cbd5e1; }
+      .code { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 27px; font-weight: 600; fill: #e0f2fe; }
+      .code-small { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 23px; font-weight: 600; fill: #e0f2fe; }
+      .step { font-family: Arial, Helvetica, sans-serif; font-size: 36px; font-weight: 900; fill: #071426; text-anchor: middle; dominant-baseline: middle; }
+      .tiny { font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 600; fill: #94a3b8; }
+      .pill { font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 800; fill: #071426; text-anchor: middle; dominant-baseline: middle; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="3000" fill="url(#bg)"/>
+  <rect width="1800" height="3000" fill="url(#grid)"/>
+  <circle cx="1650" cy="130" r="260" fill="#8b5cf6" opacity="0.12"/>
+  <circle cx="90" cy="500" r="210" fill="#06b6d4" opacity="0.08"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="1800" height="255" fill="url(#header)"/>
+  <text x="900" y="102" class="title" text-anchor="middle">GIT ON WSL TO GITHUB</text>
+  <text x="900" y="163" class="subtitle" text-anchor="middle">Local Repository → SSH Authentication → Secure Push</text>
+  <rect x="580" y="194" width="640" height="42" rx="21" fill="#ffffff" opacity="0.92"/>
+  <text x="900" y="215" class="pill">kcommit / my-first-repo / main</text>
+
+  <!-- Compact journey -->
+  <g transform="translate(110 290)">
+    <rect x="0" y="0" width="1580" height="96" rx="24" fill="#0b1224" stroke="#334155" stroke-width="2"/>
+    <text x="62" y="57" class="body" fill="#ffffff">INSTALL</text>
+    <path d="M185 48 H300" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="347" y="57" class="body">INIT</text>
+    <path d="M445 48 H560" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="605" y="57" class="body">COMMIT</text>
+    <path d="M735 48 H850" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="900" y="57" class="body">CLONE</text>
+    <path d="M1015 48 H1130" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="1176" y="57" class="body">SSH</text>
+    <path d="M1260 48 H1375" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="1426" y="57" class="body" fill="#86efac">PUSH</text>
+  </g>
+
+  <!-- Phase 1 -->
+  <rect x="100" y="420" width="1600" height="52" rx="18" fill="#7c3aed"/>
+  <text x="140" y="455" class="phase">PHASE 1 — LOCAL GIT PRACTICE IN WSL</text>
+
+  <!-- Card 1 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="500" width="1600" height="205" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="565" r="42" fill="#fbbf24"/>
+    <text x="170" y="567" class="step">1</text>
+    <text x="240" y="570" class="card-title">Install Git on WSL Ubuntu</text>
+    <rect x="240" y="598" width="1380" height="76" rx="15" fill="#06101f"/>
+    <text x="270" y="630" class="code">sudo apt update &amp;&amp; sudo apt install git -y</text>
+    <text x="270" y="662" class="code">git --version</text>
+  </g>
+
+  <!-- Card 2 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="735" width="1600" height="205" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="800" r="42" fill="#fbbf24"/>
+    <text x="170" y="802" class="step">2</text>
+    <text x="240" y="805" class="card-title">Create the Folder and Initialize Git</text>
+    <rect x="240" y="833" width="1380" height="76" rx="15" fill="#06101f"/>
+    <text x="270" y="865" class="code">mkdir -p ~/shell-scripting &amp;&amp; cd ~/shell-scripting</text>
+    <text x="270" y="897" class="code">git init   # creates the hidden .git directory</text>
+  </g>
+
+  <!-- Card 3 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="970" width="1600" height="240" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="1035" r="42" fill="#fbbf24"/>
+    <text x="170" y="1037" class="step">3</text>
+    <text x="240" y="1040" class="card-title">Configure Git Before Your First Commit</text>
+    <rect x="240" y="1068" width="1380" height="110" rx="15" fill="#06101f"/>
+    <text x="270" y="1100" class="code-small">git config --global user.name "Muhammad Khalid Khan"</text>
+    <text x="270" y="1132" class="code-small">git config --global user.email "your-email@example.com"</text>
+    <text x="270" y="1164" class="code-small">git config --global init.defaultBranch main</text>
+  </g>
+
+  <!-- Card 4 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="1240" width="1600" height="240" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="1305" r="42" fill="#fbbf24"/>
+    <text x="170" y="1307" class="step">4</text>
+    <text x="240" y="1310" class="card-title">Create, Stage, and Commit a File</text>
+    <rect x="240" y="1338" width="1380" height="110" rx="15" fill="#06101f"/>
+    <text x="270" y="1370" class="code-small">printf '#!/bin/bash\necho "Hello Git"\n' &gt; hello.sh</text>
+    <text x="270" y="1402" class="code-small">git add hello.sh</text>
+    <text x="270" y="1434" class="code-small">git commit -m "Add first shell script"</text>
+  </g>
+
+  <!-- Card 5 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="1510" width="1600" height="220" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="1575" r="42" fill="#fbbf24"/>
+    <text x="170" y="1577" class="step">5</text>
+    <text x="240" y="1580" class="card-title">Remove the File, Then Restore It</text>
+    <rect x="240" y="1608" width="1380" height="90" rx="15" fill="#06101f"/>
+    <text x="270" y="1640" class="code">rm hello.sh &amp;&amp; git status</text>
+    <text x="270" y="1680" class="code">git restore hello.sh   # recovers it from HEAD</text>
+  </g>
+
+  <!-- Phase 2 -->
+  <rect x="100" y="1770" width="1600" height="52" rx="18" fill="#0284c7"/>
+  <text x="140" y="1805" class="phase">PHASE 2 — GITHUB, HTTPS CLONE, AND SSH AUTHENTICATION</text>
+
+  <!-- Card 6 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="1850" width="1600" height="215" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="1915" r="42" fill="#38bdf8"/>
+    <text x="170" y="1917" class="step">6</text>
+    <text x="240" y="1920" class="card-title">Create `my-first-repo` on GitHub and Clone via HTTPS</text>
+    <rect x="240" y="1948" width="1380" height="86" rx="15" fill="#06101f"/>
+    <text x="270" y="1980" class="code-small">cd ~ &amp;&amp; git clone https://github.com/kcommit/my-first-repo.git</text>
+    <text x="270" y="2018" class="code-small">cd my-first-repo &amp;&amp; git remote -v</text>
+  </g>
+
+  <!-- Card 7 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="2095" width="1600" height="220" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="2160" r="42" fill="#38bdf8"/>
+    <text x="170" y="2162" class="step">7</text>
+    <text x="240" y="2165" class="card-title">Create and Commit a New File</text>
+    <rect x="240" y="2193" width="1380" height="90" rx="15" fill="#06101f"/>
+    <text x="270" y="2225" class="code">echo "My first GitHub file" &gt; first-file.txt</text>
+    <text x="270" y="2265" class="code">git add . &amp;&amp; git commit -m "Add first file"</text>
+  </g>
+
+  <!-- Card 8 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="2345" width="1600" height="245" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="2410" r="42" fill="#38bdf8"/>
+    <text x="170" y="2412" class="step">8</text>
+    <text x="240" y="2415" class="card-title">Generate and Load the SSH Key</text>
+    <rect x="240" y="2443" width="1380" height="115" rx="15" fill="#06101f"/>
+    <text x="270" y="2475" class="code-small">ssh-keygen -t ed25519 -C "your-email@example.com"</text>
+    <text x="270" y="2507" class="code-small">eval "$(ssh-agent -s)"</text>
+    <text x="270" y="2539" class="code-small">ssh-add ~/.ssh/id_ed25519</text>
+  </g>
+
+  <!-- Card 9 -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="2620" width="780" height="255" rx="28" fill="#111c32" stroke="#334155" stroke-width="2"/>
+    <circle cx="170" cy="2685" r="42" fill="#38bdf8"/>
+    <text x="170" y="2687" class="step">9</text>
+    <text x="240" y="2690" class="card-title">Add Public Key</text>
+    <rect x="150" y="2720" width="680" height="118" rx="15" fill="#06101f"/>
+    <text x="180" y="2754" class="code-small">cat ~/.ssh/id_ed25519.pub</text>
+    <text x="180" y="2790" class="body">GitHub → Settings → SSH and GPG keys</text>
+    <text x="180" y="2824" class="code-small">ssh -T git@github.com</text>
+  </g>
+
+  <!-- Card 10 -->
+  <g filter="url(#shadow)">
+    <rect x="920" y="2620" width="780" height="255" rx="28" fill="url(#success)" stroke="#4ade80" stroke-width="2"/>
+    <circle cx="990" cy="2685" r="42" fill="#dcfce7"/>
+    <text x="990" y="2687" class="step">10</text>
+    <text x="1060" y="2690" class="card-title">Switch to SSH and Push</text>
+    <rect x="970" y="2720" width="680" height="118" rx="15" fill="#052e25" opacity="0.96"/>
+    <text x="995" y="2754" class="code-small">git remote set-url origin</text>
+    <text x="995" y="2788" class="code-small">  git@github.com:kcommit/my-first-repo.git</text>
+    <text x="995" y="2824" class="code-small">git push -u origin main</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="100" y="2905" width="1600" height="64" rx="20" fill="#fbbf24"/>
+  <text x="900" y="2946" text-anchor="middle" style="font-family:Arial,Helvetica,sans-serif;font-size:27px;font-weight:800;fill:#172033">
+    KEY IDEA: An HTTPS remote asks for HTTPS credentials. Change `origin` to the SSH URL to use your SSH key.
+  </text>
+</svg>

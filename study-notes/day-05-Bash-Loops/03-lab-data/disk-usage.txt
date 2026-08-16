@@ -1,0 +1,5 @@
+mount,usage
+/,42
+/home,73
+/var,91
+/backup,85

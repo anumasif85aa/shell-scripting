@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Bash conditionals quiz with timer, scoring, shuffled answers, and explanations.">
+  <title>Bash Conditionals — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #a8b7ca;
+      --cyan: #4fd1c5;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --red: #fb7185;
+      --yellow: #fbbf24;
+      --border: #29405f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 14%), transparent 28rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+    .container { width: min(980px, calc(100% - 28px)); margin: auto; padding: 28px 0 60px; }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 95%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    .hero { padding: 30px; }
+    .eyebrow { margin: 0 0 8px; color: var(--cyan); font-weight: 850; letter-spacing: .1em; text-transform: uppercase; font-size: .76rem; }
+    h1 { margin: 0; font-size: clamp(1.9rem, 5vw, 3.1rem); line-height: 1.12; }
+    .hero > p:not(.eyebrow) { max-width: 760px; color: var(--muted); }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+    .stat { padding: 14px; border-radius: 13px; background: var(--panel-2); border: 1px solid var(--border); }
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track { height: 10px; background: #081322; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+    .progress-bar { width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--blue)); transition: width .25s; }
+    .toolbar-label { margin-top: 5px; color: var(--muted); font-size: .82rem; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+    .warning { color: var(--yellow); }
+
+    .question-card { padding: 22px; margin-bottom: 16px; }
+    .question-card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .question-number { color: var(--cyan); margin-right: 5px; }
+    .options { display: grid; gap: 10px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s, border-color .12s, background .12s;
+    }
+
+    .option:hover { transform: translateY(-1px); border-color: var(--blue); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--cyan); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--green); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--red); }
+    .option input { margin-top: 4px; accent-color: var(--cyan); }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: var(--muted);
+      background: #0a1728;
+      border-left: 4px solid var(--blue);
+      border-radius: 8px;
+    }
+
+    .explanation.show { display: block; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 28px 0; }
+    .button { border: 0; border-radius: 12px; padding: 12px 20px; font-weight: 850; cursor: pointer; }
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--cyan), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .result-card { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result-card.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--cyan); }
+    .result-message { color: var(--muted); }
+    footer { text-align: center; color: var(--muted); padding-top: 24px; }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Conditionals</p>
+      <h1>From Scratch to Advanced — 25 MCQ Quiz</h1>
+      <p>Test decision-making, comparison operators, file tests, logic, command status, pattern matching, case statements, validation, and deployment gates. Every reattempt reshuffles the questions and their answers.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reviewButton" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt &amp; Shuffle</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+    </section>
+
+    <footer><p>Learn → Practice → Check → Improve</p></footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        q: "What does a conditional allow a Bash script to do?",
+        options: ["Make a decision", "Install Bash", "Create only loops", "Change the kernel"],
+        answer: "Make a decision",
+        explanation: "A conditional tests something and chooses which commands should run."
+      },
+      {
+        q: "Which exit status normally means success?",
+        options: ["0", "1", "2", "127"],
+        answer: "0",
+        explanation: "Unix commands normally use 0 for success and a nonzero value for failure or another defined condition."
+      },
+      {
+        q: "Which keyword closes an if statement in Bash?",
+        options: ["fi", "done", "end", "esac"],
+        answer: "fi",
+        explanation: "fi is if written backward and ends an if structure."
+      },
+      {
+        q: "When does an else block run?",
+        options: ["When all earlier conditions are false", "Before the if test", "Every time the script starts", "Only when Bash has a syntax error"],
+        answer: "When all earlier conditions are false",
+        explanation: "else is the fallback branch when none of the previous if or elif tests succeeds."
+      },
+      {
+        q: "What is elif used for?",
+        options: ["Test another condition", "End a loop", "Create a function", "Redirect stderr"],
+        answer: "Test another condition",
+        explanation: "elif adds another condition between if and the optional else branch."
+      },
+      {
+        q: "In an if/elif/else chain, what happens after the first true condition?",
+        options: ["Its block runs and the remaining branches are skipped", "Every remaining branch runs", "The shell exits immediately", "The test repeats forever"],
+        answer: "Its block runs and the remaining branches are skipped",
+        explanation: "Only the first matching branch of one if/elif/else chain is executed."
+      },
+      {
+        q: "Which is the preferred Bash conditional syntax for many modern scripts?",
+        options: ["[[ condition ]]", "( condition )", "{ condition }", "<< condition >>"],
+        answer: "[[ condition ]]",
+        explanation: "Double brackets are a Bash keyword with safer string handling and support for patterns and regular expressions."
+      },
+      {
+        q: "Which operator checks whether two strings are equal inside [[ ]]?",
+        options: ["==", "-eq only", "-gt", "-d"],
+        answer: "==",
+        explanation: "Use == for string equality in [[ ]]. Numeric equality uses -eq or arithmetic syntax."
+      },
+      {
+        q: "What does [[ -z \"$name\" ]] test?",
+        options: ["The string is empty", "The string is numeric", "A directory exists", "A command succeeded"],
+        answer: "The string is empty",
+        explanation: "-z succeeds when the string has zero length."
+      },
+      {
+        q: "What does [[ -n \"$name\" ]] test?",
+        options: ["The string is not empty", "The name is a number", "The file is newer", "The user is root"],
+        answer: "The string is not empty",
+        explanation: "-n succeeds when a string contains one or more characters."
+      },
+      {
+        q: "Which numeric operator means greater than or equal?",
+        options: ["-ge", "-gt", "-le", "-eq"],
+        answer: "-ge",
+        explanation: "-ge means greater than or equal for integer comparisons."
+      },
+      {
+        q: "Which test correctly checks whether age is at least 18?",
+        options: ["[[ \"$age\" -ge 18 ]]", "[[ \"$age\" == at-least-18 ]]", "[[ -f \"$age\" ]]", "[[ \"$age\" >== 18 ]]"],
+        answer: "[[ \"$age\" -ge 18 ]]",
+        explanation: "-ge performs an integer greater-than-or-equal comparison."
+      },
+      {
+        q: "Which syntax is convenient for an arithmetic condition?",
+        options: ["(( number % 2 == 0 ))", "[[ -f number ]]", "${number == 0}", "<< number >>"],
+        answer: "(( number % 2 == 0 ))",
+        explanation: "Double parentheses evaluate Bash arithmetic and succeed when the result is nonzero."
+      },
+      {
+        q: "What does [[ -f \"$path\" ]] test?",
+        options: ["The path is a regular file", "The path is a directory", "The file is executable only", "The file is empty only"],
+        answer: "The path is a regular file",
+        explanation: "-f succeeds when the path exists and is a regular file."
+      },
+      {
+        q: "What does [[ -d \"$path\" ]] test?",
+        options: ["The path is a directory", "The path contains data", "The path was deleted", "The command is in debug mode"],
+        answer: "The path is a directory",
+        explanation: "-d succeeds when the path exists and is a directory."
+      },
+      {
+        q: "What does [[ -s \"$file\" ]] mean?",
+        options: ["The file exists and has a size greater than zero", "The file is a shell script", "The file belongs to sudo", "The file contains no spaces"],
+        answer: "The file exists and has a size greater than zero",
+        explanation: "-s checks that a file exists and is not zero bytes."
+      },
+      {
+        q: "In [[ condition1 && condition2 ]], when is the whole test true?",
+        options: ["When both conditions are true", "When either condition is true", "When both are false", "Only when condition1 is false"],
+        answer: "When both conditions are true",
+        explanation: "Logical AND requires every joined condition to succeed."
+      },
+      {
+        q: "In [[ condition1 || condition2 ]], when is the whole test true?",
+        options: ["When at least one condition is true", "Only when both are true", "Only when both are false", "Only after exit 1"],
+        answer: "When at least one condition is true",
+        explanation: "Logical OR succeeds if either condition succeeds."
+      },
+      {
+        q: "What does ! do before a condition or command?",
+        options: ["Reverses its success or failure result", "Repeats it", "Runs it as root", "Sends output to stderr"],
+        answer: "Reverses its success or failure result",
+        explanation: "! changes success to failure and failure to success for conditional decision-making."
+      },
+      {
+        q: "Why can you write if grep -q ERROR app.log; then without checking $? manually?",
+        options: ["if directly uses grep's exit status", "grep always returns true", "if reads grep's stdout only", "The shell ignores command failures"],
+        answer: "if directly uses grep's exit status",
+        explanation: "if can test a command directly; its zero or nonzero exit status decides the branch."
+      },
+      {
+        q: "What does [[ \"$file\" == *.txt ]] check?",
+        options: ["Whether the value ends with .txt", "Whether the file contains txt", "Whether txt is a command", "Whether the file is executable"],
+        answer: "Whether the value ends with .txt",
+        explanation: "The unquoted right side is treated as a pattern inside [[ ]]."
+      },
+      {
+        q: "Which operator performs regular-expression matching inside [[ ]]?",
+        options: ["=~", "===", "-regex", "~~"],
+        answer: "=~",
+        explanation: "=~ compares the left-side string with a Bash regular expression."
+      },
+      {
+        q: "Which structure is usually cleanest for matching one value against many fixed choices?",
+        options: ["case ... esac", "while ... done", "for ... done", "read ... fi"],
+        answer: "case ... esac",
+        explanation: "case is designed for menus, actions, file types, and other multi-choice pattern matching."
+      },
+      {
+        q: "Why should numeric input be validated before using -gt or -le?",
+        options: ["To avoid incorrect tests or integer-expression errors", "To make the variable global", "To enable sudo", "To create a file automatically"],
+        answer: "To avoid incorrect tests or integer-expression errors",
+        explanation: "First confirm that input has the expected numeric format, then perform the numeric comparison."
+      },
+      {
+        q: "What is the best interpretation of if ! create_directory; then ... fi?",
+        options: ["Run the block when create_directory fails", "Run the block when the function succeeds", "Define the function", "Create the directory twice"],
+        answer: "Run the block when create_directory fails",
+        explanation: "The function's nonzero status is reversed by !, so the then block handles failure."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false,
+      missedIndexes: []
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({ ...question, options: shuffle(question.options) }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      state.missedIndexes = [];
+      resultCard.classList.remove("show");
+      reviewButton.hidden = true;
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+        card.append(heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      progressBar.style.width = `${(answered / state.questions.length) * 100}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      if (!autoSubmitted && answered < state.questions.length) {
+        const unanswered = state.questions.length - answered;
+        if (!window.confirm(`${unanswered} question(s) are unanswered. Submit anyway?`)) return;
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+      state.missedIndexes = [];
+      let correct = 0;
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+
+        card.querySelectorAll(".option").forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && selected.value !== question.answer) label.classList.add("incorrect");
+        });
+
+        if (selected && selected.value === question.answer) {
+          correct += 1;
+        } else {
+          state.missedIndexes.push(questionIndex);
+        }
+
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — you can explain and apply Bash conditionals confidently.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent = "Passed — review missed explanations and repeat the matching lab tasks.";
+      } else if (percentage >= 60) {
+        resultMessage.textContent = "Good progress — revisit tests, logic, and validation before reattempting.";
+      } else {
+        resultMessage.textContent = "Return to the study notes and Level 1 lab, then try again step by step.";
+      }
+
+      submitButton.disabled = true;
+      reviewButton.hidden = state.missedIndexes.length === 0;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function reviewMissed() {
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        const index = Number(card.dataset.questionIndex);
+        card.hidden = !state.missedIndexes.includes(index);
+      });
+      resultCard.classList.remove("show");
+      statusLabel.textContent = "Reviewing missed";
+      window.scrollTo({ top: quizForm.offsetTop - 90, behavior: "smooth" });
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reviewButton.addEventListener("click", reviewMissed);
+    reattemptButton.addEventListener("click", createAttempt);
+    createAttempt();
+  </script>
+</body>
+</html>

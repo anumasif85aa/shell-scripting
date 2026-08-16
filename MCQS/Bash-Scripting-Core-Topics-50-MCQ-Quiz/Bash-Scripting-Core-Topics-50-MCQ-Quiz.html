@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 50-question Bash quiz covering standard streams, variables, arguments, loops, and functions with timer, scoring, shuffled choices, and explanations.">
+  <title>Bash Scripting Core Topics — 50 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(1020px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      line-height: 1.12;
+    }
+
+    .hero > p:not(.eyebrow) {
+      max-width: 830px;
+      color: var(--muted);
+    }
+
+    .topic-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .topic-pill, .topic-badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgb(79 209 197 / 45%);
+      border-radius: 999px;
+      color: #bdfbf5;
+      background: rgb(13 74 79 / 35%);
+      font-weight: 750;
+    }
+
+    .topic-pill {
+      padding: 6px 11px;
+      font-size: .78rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-top: 5px;
+    }
+
+    .timer {
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .question-card {
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .question-card.hidden-review { display: none; }
+
+    .question-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .topic-badge {
+      padding: 3px 9px;
+      font-size: .7rem;
+    }
+
+    .question-card h2 {
+      margin: 0 0 16px;
+      font-size: 1.05rem;
+    }
+
+    .question-number {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-2);
+    }
+
+    .option:has(input:checked) {
+      background: #12334b;
+      border-color: var(--accent);
+    }
+
+    .option.correct {
+      background: rgb(16 90 68 / 45%);
+      border-color: var(--success);
+    }
+
+    .option.incorrect {
+      background: rgb(120 28 52 / 40%);
+      border-color: var(--danger);
+    }
+
+    .option input {
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #03131d;
+      background: linear-gradient(135deg, var(--accent), #7dd3fc);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .button:hover { filter: brightness(1.08); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .button[hidden] { display: none; }
+
+    .result-card {
+      display: none;
+      padding: 26px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .result-card.show { display: block; }
+
+    .score {
+      font-size: clamp(2.4rem, 8vw, 4.8rem);
+      font-weight: 950;
+      color: var(--accent);
+    }
+
+    .result-message { color: var(--muted); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    .result-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 650px;
+    }
+
+    .result-summary div, .breakdown-row {
+      padding: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .breakdown {
+      width: min(680px, 100%);
+      margin: 20px auto 0;
+      text-align: left;
+    }
+
+    .breakdown h3 { text-align: center; }
+
+    .breakdown-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding-top: 24px;
+    }
+
+    footer a { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+      .result-summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Core Topics Review</p>
+      <h1>Bash Scripting — 50 MCQ Quiz</h1>
+      <p>Test the Bash topics covered in class: standard streams, variables,
+        positional arguments, loops, and functions. Questions and answer choices
+        are shuffled on every attempt.</p>
+
+      <div class="topic-list" aria-label="Quiz topics">
+        <span class="topic-pill">Standard Streams · 10</span>
+        <span class="topic-pill">Variables · 10</span>
+        <span class="topic-pill">Arguments · 10</span>
+        <span class="topic-pill">Loops · 10</span>
+        <span class="topic-pill">Functions · 10</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>50</strong></div>
+        <div class="stat"><span>Time limit</span><strong>50 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="toolbar-label" id="progressLabel">0 of 50 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">50:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reviewButton" type="button" hidden>Review Missed Only</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt &amp; Shuffle</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+
+      <div class="result-summary">
+        <div>Correct<br><strong id="correctCount">0</strong></div>
+        <div>Incorrect<br><strong id="incorrectCount">0</strong></div>
+        <div>Unanswered<br><strong id="unansweredCount">0</strong></div>
+      </div>
+
+      <div class="breakdown">
+        <h3>Topic Breakdown</h3>
+        <div id="breakdownRows"></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan ·
+        <a href="https://github.com/krmaryum">GitHub: krmaryum</a>
+      </p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        topic: "Standard Streams",
+        q: "Which file descriptor represents standard input (stdin)?",
+        options: ["0", "1", "2", "3"],
+        answer: "0",
+        explanation: "Standard input uses file descriptor 0."
+      },
+      {
+        topic: "Standard Streams",
+        q: "Which file descriptor represents standard output (stdout)?",
+        options: ["1", "0", "2", "255"],
+        answer: "1",
+        explanation: "Normal command output is written to file descriptor 1."
+      },
+      {
+        topic: "Standard Streams",
+        q: "Which file descriptor represents standard error (stderr)?",
+        options: ["2", "0", "1", "10"],
+        answer: "2",
+        explanation: "Error and diagnostic messages normally use file descriptor 2."
+      },
+      {
+        topic: "Standard Streams",
+        q: "What does command > output.txt normally do?",
+        options: [
+          "Redirect stdout and overwrite output.txt",
+          "Redirect stderr and append to output.txt",
+          "Read stdin from output.txt",
+          "Send all output to the terminal"
+        ],
+        answer: "Redirect stdout and overwrite output.txt",
+        explanation: "The > operator redirects standard output and truncates the destination file first."
+      },
+      {
+        topic: "Standard Streams",
+        q: "What does command >> output.txt do?",
+        options: [
+          "Append stdout to output.txt",
+          "Overwrite output.txt with stderr",
+          "Read two lines from output.txt",
+          "Redirect stdin to the command"
+        ],
+        answer: "Append stdout to output.txt",
+        explanation: "The >> operator adds standard output to the end of the file."
+      },
+      {
+        topic: "Standard Streams",
+        q: "Which redirection saves only stderr in errors.log?",
+        options: [
+          "command 2> errors.log",
+          "command > errors.log",
+          "command < errors.log",
+          "command 1< errors.log"
+        ],
+        answer: "command 2> errors.log",
+        explanation: "2> redirects file descriptor 2, which is standard error."
+      },
+      {
+        topic: "Standard Streams",
+        q: "What does command > all.log 2>&1 do?",
+        options: [
+          "Send stdout and stderr to all.log",
+          "Send only stderr to all.log",
+          "Read both streams from all.log",
+          "Discard both output streams"
+        ],
+        answer: "Send stdout and stderr to all.log",
+        explanation: "Stdout is redirected to the file first; stderr is then sent to stdout's current destination."
+      },
+      {
+        topic: "Standard Streams",
+        q: "What does command < input.txt do?",
+        options: [
+          "Use input.txt as the command's stdin",
+          "Save stdout in input.txt",
+          "Save stderr in input.txt",
+          "Make input.txt executable"
+        ],
+        answer: "Use input.txt as the command's stdin",
+        explanation: "The < operator connects the file to standard input."
+      },
+      {
+        topic: "Standard Streams",
+        q: "What is /dev/null commonly used for?",
+        options: [
+          "Discard unwanted output",
+          "Store permanent logs",
+          "Create Linux users",
+          "Read keyboard input"
+        ],
+        answer: "Discard unwanted output",
+        explanation: "/dev/null accepts and discards data written to it."
+      },
+      {
+        topic: "Standard Streams",
+        q: "Which command deliberately sends a message to stderr?",
+        options: [
+          "echo \"Error\" >&2",
+          "echo \"Error\" >2",
+          "echo \"Error\" <2",
+          "echo \"Error\" |0"
+        ],
+        answer: "echo \"Error\" >&2",
+        explanation: ">&2 redirects echo's standard output to file descriptor 2."
+      },
+
+      {
+        topic: "Variables",
+        q: "Which is a valid Bash variable assignment?",
+        options: [
+          "name=\"Ali\"",
+          "name = \"Ali\"",
+          "$name=\"Ali\"",
+          "set name: Ali"
+        ],
+        answer: "name=\"Ali\"",
+        explanation: "Bash assignments cannot contain spaces around the equals sign."
+      },
+      {
+        topic: "Variables",
+        q: "Why should echo \"$name\" normally use double quotes?",
+        options: [
+          "Prevent unintended word splitting and globbing",
+          "Convert the value into an integer",
+          "Make the variable read-only",
+          "Export it to child processes"
+        ],
+        answer: "Prevent unintended word splitting and globbing",
+        explanation: "Double quotes preserve the expanded value as one argument."
+      },
+      {
+        topic: "Variables",
+        q: "Which syntax stores the output of hostname in a variable?",
+        options: [
+          "machine=\"$(hostname)\"",
+          "machine=\"${hostname}\"",
+          "machine=((hostname))",
+          "$machine=hostname"
+        ],
+        answer: "machine=\"$(hostname)\"",
+        explanation: "$(command) performs command substitution and captures stdout."
+      },
+      {
+        topic: "Variables",
+        q: "Which syntax performs integer arithmetic in Bash?",
+        options: [
+          "total=$((first + second))",
+          "total=$(first + second)",
+          "total=${first + second}",
+          "total=[first + second]"
+        ],
+        answer: "total=$((first + second))",
+        explanation: "$((...)) is arithmetic expansion."
+      },
+      {
+        topic: "Variables",
+        q: "What does export APP_ENV=\"test\" do?",
+        options: [
+          "Makes APP_ENV available to child processes",
+          "Makes APP_ENV local to one function",
+          "Deletes APP_ENV after one command",
+          "Writes APP_ENV to /etc/environment automatically"
+        ],
+        answer: "Makes APP_ENV available to child processes",
+        explanation: "export marks a shell variable for inheritance by child processes."
+      },
+      {
+        topic: "Variables",
+        q: "Which command prevents a variable from being changed afterward?",
+        options: [
+          "readonly company=\"NIT\"",
+          "local company=\"NIT\"",
+          "unset company",
+          "shift company"
+        ],
+        answer: "readonly company=\"NIT\"",
+        explanation: "readonly creates a variable that cannot normally be reassigned or unset."
+      },
+      {
+        topic: "Variables",
+        q: "What does unset fruit do?",
+        options: [
+          "Remove the fruit variable",
+          "Export the fruit variable",
+          "Make fruit equal to zero",
+          "Print the fruit variable"
+        ],
+        answer: "Remove the fruit variable",
+        explanation: "unset removes the named shell variable."
+      },
+      {
+        topic: "Variables",
+        q: "What does name=\"${1:-Guest}\" mean?",
+        options: [
+          "Use $1, or Guest when $1 is unset or empty",
+          "Always replace $1 with Guest",
+          "Delete the first argument",
+          "Subtract Guest from $1"
+        ],
+        answer: "Use $1, or Guest when $1 is unset or empty",
+        explanation: "The :- parameter expansion supplies a default for an unset or empty value."
+      },
+      {
+        topic: "Variables",
+        q: "Why are braces useful in echo \"${name}_report\"?",
+        options: [
+          "They clearly separate the variable name from surrounding text",
+          "They make name a global variable",
+          "They redirect output to a file",
+          "They convert report into an argument"
+        ],
+        answer: "They clearly separate the variable name from surrounding text",
+        explanation: "Braces show exactly where the variable name ends."
+      },
+      {
+        topic: "Variables",
+        q: "What does the special variable $? contain?",
+        options: [
+          "The exit status of the most recently completed command",
+          "The current script name",
+          "The number of arguments",
+          "The current user's UID"
+        ],
+        answer: "The exit status of the most recently completed command",
+        explanation: "$? must be checked immediately because the next command replaces it."
+      },
+
+      {
+        topic: "Arguments",
+        q: "What does $0 normally represent in a Bash script?",
+        options: [
+          "The script name or invocation path",
+          "The first user argument",
+          "The argument count",
+          "The current process ID"
+        ],
+        answer: "The script name or invocation path",
+        explanation: "$0 identifies how the current script or shell was invoked."
+      },
+      {
+        topic: "Arguments",
+        q: "What does $1 represent in a script?",
+        options: [
+          "The first positional argument",
+          "Standard output",
+          "The first environment variable",
+          "The script's exit status"
+        ],
+        answer: "The first positional argument",
+        explanation: "$1 is the first value written after the script name."
+      },
+      {
+        topic: "Arguments",
+        q: "What does $# contain?",
+        options: [
+          "The number of positional arguments",
+          "All arguments as one string",
+          "The last argument only",
+          "The shell process ID"
+        ],
+        answer: "The number of positional arguments",
+        explanation: "$# is commonly used to validate the expected argument count."
+      },
+      {
+        topic: "Arguments",
+        q: "Which expansion safely preserves all positional arguments separately?",
+        options: [
+          "\"$@\"",
+          "\"$*\"",
+          "$?",
+          "$$"
+        ],
+        answer: "\"$@\"",
+        explanation: "Quoted \"$@\" preserves each argument as a separate word, including arguments containing spaces."
+      },
+      {
+        topic: "Arguments",
+        q: "When quoted, how does \"$*\" differ from \"$@\"?",
+        options: [
+          "\"$*\" combines all arguments into one word",
+          "\"$*\" deletes the first argument",
+          "\"$*\" contains only the script name",
+          "\"$*\" always expands to zero words"
+        ],
+        answer: "\"$*\" combines all arguments into one word",
+        explanation: "Quoted \"$*\" joins arguments using the first character of IFS."
+      },
+      {
+        topic: "Arguments",
+        q: "What does shift do to positional arguments?",
+        options: [
+          "Remove $1 and move the remaining arguments left",
+          "Move every argument into an array automatically",
+          "Reverse the order of all arguments",
+          "Export all arguments"
+        ],
+        answer: "Remove $1 and move the remaining arguments left",
+        explanation: "After shift, the old $2 becomes $1, the old $3 becomes $2, and so on."
+      },
+      {
+        topic: "Arguments",
+        q: "Which test requires exactly two script arguments?",
+        options: [
+          "[[ $# -ne 2 ]]",
+          "[[ $1 = 2 ]]",
+          "[[ \"$@\" -eq 2 ]]",
+          "[[ $? -ne 2 ]]"
+        ],
+        answer: "[[ $# -ne 2 ]]",
+        explanation: "The condition is true when the argument count is not equal to two."
+      },
+      {
+        topic: "Arguments",
+        q: "Which expansion safely gives the first argument a default value of apple?",
+        options: [
+          "fruit=\"${1:-apple}\"",
+          "fruit=\"$1=apple\"",
+          "fruit=\"${apple:1}\"",
+          "fruit=\"$(1 apple)\""
+        ],
+        answer: "fruit=\"${1:-apple}\"",
+        explanation: "${1:-apple} uses apple when the first argument is missing or empty."
+      },
+      {
+        topic: "Arguments",
+        q: "How should a two-word value be passed as one argument?",
+        options: [
+          "./script.sh \"red apple\"",
+          "./script.sh red apple",
+          "./script.sh (red apple)",
+          "./script.sh {red apple}"
+        ],
+        answer: "./script.sh \"red apple\"",
+        explanation: "Quoting keeps red apple together as one positional argument."
+      },
+      {
+        topic: "Arguments",
+        q: "A script is run as ./fruit.sh apple banana. What is $2?",
+        options: [
+          "banana",
+          "apple",
+          "./fruit.sh",
+          "2"
+        ],
+        answer: "banana",
+        explanation: "The second value after the script name becomes $2."
+      },
+
+      {
+        topic: "Loops",
+        q: "Which keyword ends a Bash for loop?",
+        options: [
+          "done",
+          "fi",
+          "esac",
+          "end"
+        ],
+        answer: "done",
+        explanation: "Both for and while loop bodies end with done."
+      },
+      {
+        topic: "Loops",
+        q: "How many iterations does for number in {1..5} perform?",
+        options: [
+          "5",
+          "4",
+          "6",
+          "1"
+        ],
+        answer: "5",
+        explanation: "Brace expansion produces 1, 2, 3, 4, and 5."
+      },
+      {
+        topic: "Loops",
+        q: "Which is a valid C-style Bash loop header?",
+        options: [
+          "for ((i=1; i<=5; i++))",
+          "for [i=1; i<=5; i++]",
+          "for i from 1 to 5",
+          "for (i in 1..5)"
+        ],
+        answer: "for ((i=1; i<=5; i++))",
+        explanation: "Bash supports the arithmetic for ((initialization; condition; update)) form."
+      },
+      {
+        topic: "Loops",
+        q: "When does a while loop continue running?",
+        options: [
+          "While its condition returns success",
+          "Only when its condition returns status 1",
+          "Until Bash receives any output",
+          "Exactly ten times"
+        ],
+        answer: "While its condition returns success",
+        explanation: "Bash conditions follow command status: zero is success and keeps the while loop running."
+      },
+      {
+        topic: "Loops",
+        q: "When does an until loop stop?",
+        options: [
+          "When its condition becomes successful",
+          "When its condition remains unsuccessful",
+          "After the first echo command",
+          "Only when break 2 is used"
+        ],
+        answer: "When its condition becomes successful",
+        explanation: "until repeats while the condition is unsuccessful and stops when it succeeds."
+      },
+      {
+        topic: "Loops",
+        q: "What does break do inside a loop?",
+        options: [
+          "Exit the current loop",
+          "Skip only the current iteration",
+          "Restart the script",
+          "Delete the loop variable"
+        ],
+        answer: "Exit the current loop",
+        explanation: "break ends the nearest enclosing loop unless a numeric level is specified."
+      },
+      {
+        topic: "Loops",
+        q: "What does continue do inside a loop?",
+        options: [
+          "Skip the rest of the current iteration",
+          "Exit the complete script",
+          "End every nested loop",
+          "Repeat the previous iteration"
+        ],
+        answer: "Skip the rest of the current iteration",
+        explanation: "continue moves directly to the next iteration."
+      },
+      {
+        topic: "Loops",
+        q: "Which loop safely reads a file line by line?",
+        options: [
+          "while IFS= read -r line",
+          "for line in $(cat file)",
+          "while read $line",
+          "for line at file"
+        ],
+        answer: "while IFS= read -r line",
+        explanation: "IFS= preserves whitespace and -r prevents backslash interpretation."
+      },
+      {
+        topic: "Loops",
+        q: "With nullglob enabled, what happens when *.txt matches no files?",
+        options: [
+          "The pattern expands to zero loop items",
+          "The literal text *.txt is processed once",
+          "Bash creates an empty .txt file",
+          "The shell exits immediately"
+        ],
+        answer: "The pattern expands to zero loop items",
+        explanation: "shopt -s nullglob removes an unmatched glob instead of leaving it unchanged."
+      },
+      {
+        topic: "Loops",
+        q: "What does break 2 do inside two nested loops?",
+        options: [
+          "Exit both loop levels",
+          "Skip two iterations of the inner loop",
+          "Run the outer loop twice",
+          "Return status 2 without leaving a loop"
+        ],
+        answer: "Exit both loop levels",
+        explanation: "The numeric argument tells break how many nested loop levels to leave."
+      },
+
+      {
+        topic: "Functions",
+        q: "Which is valid Bash function-definition syntax?",
+        options: [
+          "greet() { echo \"Hello\"; }",
+          "greet[] { echo \"Hello\"; }",
+          "define greet = echo \"Hello\"",
+          "greet: echo \"Hello\" end"
+        ],
+        answer: "greet() { echo \"Hello\"; }",
+        explanation: "The function name, parentheses, and braced body form a valid Bash definition."
+      },
+      {
+        topic: "Functions",
+        q: "How do you call a function named greet?",
+        options: [
+          "greet",
+          "greet()",
+          "call greet",
+          "run(greet)"
+        ],
+        answer: "greet",
+        explanation: "Call a Bash function by writing its name without parentheses."
+      },
+      {
+        topic: "Functions",
+        q: "Why use local name=\"$1\" inside a function?",
+        options: [
+          "Avoid unintentionally changing a global variable",
+          "Export name to every process",
+          "Make name a Linux user",
+          "End the function after one command"
+        ],
+        answer: "Avoid unintentionally changing a global variable",
+        explanation: "local limits the variable to the current function call."
+      },
+      {
+        topic: "Functions",
+        q: "What should return normally provide from a Bash function?",
+        options: [
+          "A numeric status code",
+          "A long text string",
+          "A new shell process",
+          "A filename extension"
+        ],
+        answer: "A numeric status code",
+        explanation: "return reports success or failure using a status from 0 through 255."
+      },
+      {
+        topic: "Functions",
+        q: "How should a function provide string data for command substitution?",
+        options: [
+          "Write the data to stdout",
+          "Use return with the string",
+          "Use break with the string",
+          "Store it only in $?"
+        ],
+        answer: "Write the data to stdout",
+        explanation: "Command substitution captures stdout; return is reserved for numeric status."
+      },
+      {
+        topic: "Functions",
+        q: "If a function has no explicit return, what is its usual status?",
+        options: [
+          "The status of its last executed command",
+          "Always 0",
+          "Always 1",
+          "Its number of arguments"
+        ],
+        answer: "The status of its last executed command",
+        explanation: "Like a command group, a function normally finishes with the status of its final command."
+      },
+      {
+        topic: "Functions",
+        q: "Which command loads functions.sh into the current shell?",
+        options: [
+          "source \"./functions.sh\"",
+          "bash -n functions.sh",
+          "chmod functions.sh",
+          "echo functions.sh"
+        ],
+        answer: "source \"./functions.sh\"",
+        explanation: "source executes the file in the current shell, making its functions available."
+      },
+      {
+        topic: "Functions",
+        q: "What does if check_file \"data.txt\"; then test?",
+        options: [
+          "The return status of check_file",
+          "Whether check_file printed any text",
+          "Whether data.txt is executable only",
+          "The number of lines in data.txt"
+        ],
+        answer: "The return status of check_file",
+        explanation: "if evaluates command or function status: zero follows the then branch."
+      },
+      {
+        topic: "Functions",
+        q: "Why might a larger script end with main \"$@\"?",
+        options: [
+          "Pass all original script arguments safely to main",
+          "Convert all arguments into one word",
+          "Run main as root",
+          "Delete positional arguments"
+        ],
+        answer: "Pass all original script arguments safely to main",
+        explanation: "Quoted \"$@\" forwards every argument while preserving argument boundaries."
+      },
+      {
+        topic: "Functions",
+        q: "What does trap cleanup EXIT arrange?",
+        options: [
+          "Call cleanup when the script exits",
+          "Delete the cleanup function immediately",
+          "Run cleanup only after a syntax error",
+          "Exit every loop named cleanup"
+        ],
+        answer: "Call cleanup when the script exits",
+        explanation: "An EXIT trap is commonly used for cleanup of temporary resources."
+      }
+    ];
+
+    const totalSeconds = 50 * 60;
+
+    const state = {
+      questions: [],
+      secondsRemaining: totalSeconds,
+      timerId: null,
+      submitted: false,
+      reviewMissedOnly: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+    const correctCount = document.getElementById("correctCount");
+    const incorrectCount = document.getElementById("incorrectCount");
+    const unansweredCount = document.getElementById("unansweredCount");
+    const breakdownRows = document.getElementById("breakdownRows");
+
+    function shuffle(items) {
+      const result = [...items];
+
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = totalSeconds;
+      state.submitted = false;
+      state.reviewMissedOnly = false;
+
+      resultCard.classList.remove("show");
+      submitButton.disabled = false;
+      reviewButton.hidden = true;
+      reviewButton.textContent = "Review Missed Only";
+      statusLabel.textContent = "In progress";
+
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const meta = document.createElement("div");
+        meta.className = "question-meta";
+
+        const badge = document.createElement("span");
+        badge.className = "topic-badge";
+        badge.textContent = question.topic;
+        meta.append(badge);
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = `Explanation: ${question.explanation}`;
+
+        card.append(meta, heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent =
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const answeredBeforeSubmit =
+        quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const unansweredBeforeSubmit = state.questions.length - answeredBeforeSubmit;
+
+      if (!autoSubmitted && unansweredBeforeSubmit > 0) {
+        const confirmed = window.confirm(
+          `You still have ${unansweredBeforeSubmit} unanswered question(s). Submit anyway?`
+        );
+
+        if (!confirmed) return;
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      let answered = 0;
+      const topicResults = {};
+
+      state.questions.forEach((question, questionIndex) => {
+        if (!topicResults[question.topic]) {
+          topicResults[question.topic] = { correct: 0, total: 0 };
+        }
+        topicResults[question.topic].total += 1;
+
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+        let questionCorrect = false;
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+
+          if (option === question.answer) {
+            label.classList.add("correct");
+          }
+
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (selected) {
+          answered += 1;
+
+          if (selected.value === question.answer) {
+            correct += 1;
+            topicResults[question.topic].correct += 1;
+            questionCorrect = true;
+          }
+        }
+
+        card.dataset.correct = questionCorrect ? "true" : "false";
+        card.querySelectorAll("input").forEach((input) => {
+          input.disabled = true;
+        });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const incorrect = answered - correct;
+      const unanswered = state.questions.length - answered;
+      const percentage = Math.round((correct / state.questions.length) * 100);
+
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+      correctCount.textContent = correct;
+      incorrectCount.textContent = incorrect;
+      unansweredCount.textContent = unanswered;
+
+      if (percentage >= 90) {
+        resultMessage.textContent =
+          "Excellent — strong Bash fundamentals. Continue with practical automation projects.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent =
+          "Passed — review missed explanations and repeat the related hands-on labs.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent =
+          "Developing — revisit your weaker topics, practise the commands, and reattempt.";
+      } else {
+        resultMessage.textContent =
+          "Foundation review required — study each topic, practise examples, and try again.";
+      }
+
+      renderBreakdown(topicResults);
+      submitButton.disabled = true;
+      reviewButton.hidden = false;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function renderBreakdown(topicResults) {
+      breakdownRows.innerHTML = "";
+      const preferredOrder = [
+        "Standard Streams",
+        "Variables",
+        "Arguments",
+        "Loops",
+        "Functions"
+      ];
+
+      preferredOrder.forEach((topic) => {
+        const result = topicResults[topic];
+        const row = document.createElement("div");
+        row.className = "breakdown-row";
+
+        const name = document.createElement("span");
+        name.textContent = topic;
+
+        const score = document.createElement("strong");
+        score.textContent = `${result.correct}/${result.total}`;
+
+        row.append(name, score);
+        breakdownRows.append(row);
+      });
+    }
+
+    function toggleMissedReview() {
+      if (!state.submitted) return;
+
+      state.reviewMissedOnly = !state.reviewMissedOnly;
+
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        const shouldHide =
+          state.reviewMissedOnly && card.dataset.correct === "true";
+        card.classList.toggle("hidden-review", shouldHide);
+      });
+
+      reviewButton.textContent = state.reviewMissedOnly
+        ? "Show All Questions"
+        : "Review Missed Only";
+
+      if (state.reviewMissedOnly) {
+        quizForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    reviewButton.addEventListener("click", toggleMissedReview);
+    createAttempt();
+  </script>
+</body>
+</html>

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bash Loops — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      --navy: #07182d;
+      --panel: #102844;
+      --cyan: #25c8f5;
+      --green: #49dc83;
+      --amber: #ffc857;
+      --red: #ff6b6b;
+      --text: #f4f8fc;
+      --muted: #adc0d5;
+      --border: #285075;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, #12436a 0, transparent 35%),
+        linear-gradient(145deg, #04101f, var(--navy));
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page {
+      width: min(100% - 28px, 980px);
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      letter-spacing: 0.03em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(16, 40, 68, 0.86);
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.2rem;
+    }
+
+    .timer.warning strong {
+      color: var(--amber);
+    }
+
+    .timer.danger strong {
+      color: var(--red);
+    }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #071525;
+      margin-bottom: 18px;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 0.25s ease;
+    }
+
+    .card {
+      padding: clamp(20px, 4vw, 38px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(16, 40, 68, 0.95);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .question-number {
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .question {
+      margin: 10px 0 22px;
+      font-size: clamp(1.2rem, 3vw, 1.65rem);
+      line-height: 1.4;
+    }
+
+    .answers {
+      display: grid;
+      gap: 12px;
+    }
+
+    .answer {
+      width: 100%;
+      padding: 15px 17px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      color: var(--text);
+      background: #0a1d32;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .answer:hover,
+    .answer:focus-visible {
+      transform: translateY(-1px);
+      border-color: var(--cyan);
+      outline: none;
+    }
+
+    .answer.selected {
+      border-color: var(--green);
+      background: #103f38;
+      box-shadow: inset 4px 0 var(--green);
+    }
+
+    .letter {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      border-radius: 50%;
+      color: #05131f;
+      background: var(--cyan);
+      font-weight: 800;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 11px;
+      color: #04101f;
+      background: var(--cyan);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      color: var(--text);
+      border: 1px solid var(--border);
+      background: #0a1d32;
+    }
+
+    .button.submit {
+      background: var(--green);
+    }
+
+    .button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .question-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+      gap: 7px;
+      margin-top: 18px;
+    }
+
+    .map-button {
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--muted);
+      background: #091a2d;
+      cursor: pointer;
+    }
+
+    .map-button.answered {
+      color: #04101f;
+      border-color: var(--green);
+      background: var(--green);
+      font-weight: 800;
+    }
+
+    .map-button.current {
+      outline: 3px solid var(--cyan);
+      outline-offset: 2px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .result-hero {
+      text-align: center;
+    }
+
+    .score-circle {
+      display: grid;
+      width: 150px;
+      height: 150px;
+      place-items: center;
+      margin: 20px auto;
+      border: 8px solid var(--cyan);
+      border-radius: 50%;
+      background: #07182d;
+      font-size: 2rem;
+      font-weight: 900;
+    }
+
+    .result-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .review-item {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #0a1d32;
+    }
+
+    .review-item.correct {
+      border-left: 6px solid var(--green);
+    }
+
+    .review-item.incorrect {
+      border-left: 6px solid var(--red);
+    }
+
+    .review-item h3 {
+      margin-top: 0;
+      line-height: 1.4;
+    }
+
+    .review-item p {
+      margin: 7px 0;
+      line-height: 1.5;
+    }
+
+    .correct-text {
+      color: var(--green);
+    }
+
+    .incorrect-text {
+      color: var(--red);
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      color: #bff5ff;
+      background: #06111f;
+      font-family: "Cascadia Code", Consolas, monospace;
+    }
+
+    @media (max-width: 650px) {
+      .dashboard,
+      .result-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .controls,
+      .button-group {
+        width: 100%;
+      }
+
+      .button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>Bash Loops — 25 MCQ Quiz</h1>
+      <p>From fruits and counters to safe DevOps automation</p>
+    </header>
+
+    <section id="quizSection">
+      <div class="dashboard" aria-label="Quiz status">
+        <div class="stat">
+          <span>Progress</span>
+          <strong id="progressText">1 / 25</strong>
+        </div>
+        <div class="stat">
+          <span>Answered</span>
+          <strong id="answeredText">0 / 25</strong>
+        </div>
+        <div class="stat timer" id="timerBox">
+          <span>Time remaining</span>
+          <strong id="timerText">20:00</strong>
+        </div>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <article class="card">
+        <div class="question-number" id="questionNumber"></div>
+        <h2 class="question" id="questionText"></h2>
+        <div class="answers" id="answers"></div>
+
+        <div class="controls">
+          <div class="button-group">
+            <button class="button secondary" id="previousButton" type="button">Previous</button>
+            <button class="button" id="nextButton" type="button">Next</button>
+          </div>
+          <button class="button submit" id="submitButton" type="button">Submit Quiz</button>
+        </div>
+
+        <nav class="question-map" id="questionMap" aria-label="Question navigation"></nav>
+      </article>
+    </section>
+
+    <section id="resultSection" class="hidden">
+      <article class="card">
+        <div class="result-hero">
+          <h2>Quiz Result</h2>
+          <div class="score-circle" id="scoreCircle"></div>
+          <p id="resultMessage"></p>
+        </div>
+
+        <div class="result-summary">
+          <div class="stat"><span>Correct</span><strong id="correctCount"></strong></div>
+          <div class="stat"><span>Incorrect</span><strong id="incorrectCount"></strong></div>
+          <div class="stat"><span>Unanswered</span><strong id="unansweredCount"></strong></div>
+        </div>
+
+        <div class="controls">
+          <button class="button" id="reattemptButton" type="button">Reattempt — Shuffle Quiz</button>
+        </div>
+
+        <h2>Answer Review</h2>
+        <div id="review"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const QUIZ_SECONDS = 20 * 60;
+
+    const questionBank = [
+      {
+        question: "What is the main purpose of a loop in Bash?",
+        options: [
+          ["Repeat one or more commands", true],
+          ["Encrypt a script", false],
+          ["Install Bash", false],
+          ["Change file ownership", false]
+        ],
+        explanation: "A loop repeats commands for a list of items or while a condition requires repetition."
+      },
+      {
+        question: "Which loop is normally best for processing apple, banana, and cherry?",
+        options: [
+          ["for", true],
+          ["until", false],
+          ["if", false],
+          ["case", false]
+        ],
+        explanation: "A for loop is ideal when the items are already known."
+      },
+      {
+        question: "Which two keywords surround the commands inside a Bash loop?",
+        options: [
+          ["do and done", true],
+          ["then and fi", false],
+          ["case and esac", false],
+          ["start and stop", false]
+        ],
+        explanation: "Bash loop bodies begin with do and end with done."
+      },
+      {
+        question: "In `for fruit in apple banana cherry`, what does `$fruit` contain during the second round?",
+        options: [
+          ["banana", true],
+          ["apple", false],
+          ["cherry", false],
+          ["all three fruits", false]
+        ],
+        explanation: "The loop variable receives one list item per round, so the second value is banana."
+      },
+      {
+        question: "What values are produced by `{2..8..2}`?",
+        options: [
+          ["2 4 6 8", true],
+          ["2 3 4 5 6 7 8", false],
+          ["8 6 4 2", false],
+          ["2 8 2", false]
+        ],
+        explanation: "Brace expansion starts at 2, ends at 8, and uses a step of 2."
+      },
+      {
+        question: "Which is a valid C-style Bash loop header?",
+        options: [
+          ["for (( i=1; i<=5; i++ ))", true],
+          ["for [ i=1; i<=5; i++ ]", false],
+          ["for i from 1 to 5", false],
+          ["loop (( i=1; i<=5; i++ ))", false]
+        ],
+        explanation: "A C-style Bash loop uses double parentheses and three expressions separated by semicolons."
+      },
+      {
+        question: "When does a `while` loop continue running?",
+        options: [
+          ["While its condition succeeds", true],
+          ["Only while its condition fails", false],
+          ["Exactly one time", false],
+          ["Only when a file is executable", false]
+        ],
+        explanation: "A while loop repeats as long as its condition returns a successful status."
+      },
+      {
+        question: "When does an `until` loop stop?",
+        options: [
+          ["When its condition becomes true", true],
+          ["When its condition remains false", false],
+          ["After exactly ten rounds", false],
+          ["Only after Ctrl+C", false]
+        ],
+        explanation: "Until repeats while the condition is false and stops when the condition succeeds."
+      },
+      {
+        question: "What does `break` do inside a loop?",
+        options: [
+          ["Exits the loop immediately", true],
+          ["Skips only the current round", false],
+          ["Restarts the script", false],
+          ["Pauses for one second", false]
+        ],
+        explanation: "Break ends the nearest active loop unless a numeric loop level is supplied."
+      },
+      {
+        question: "What does `continue` do inside a loop?",
+        options: [
+          ["Skips the rest of the current round", true],
+          ["Exits the entire script", false],
+          ["Deletes the current value", false],
+          ["Repeats the previous round", false]
+        ],
+        explanation: "Continue moves directly to the next iteration."
+      },
+      {
+        question: "Which expansion safely represents every script argument as a separate item?",
+        options: [
+          ["\"$@\"", true],
+          ["$@", false],
+          ["\"$*\" only", false],
+          ["$0", false]
+        ],
+        explanation: "Quoted \"$@\" preserves argument boundaries, including arguments containing spaces."
+      },
+      {
+        question: "Which expansion safely loops through all elements of an indexed array named `servers`?",
+        options: [
+          ["\"${servers[@]}\"", true],
+          ["$servers", false],
+          ["${servers[*]} without quotes", false],
+          ["\"$servers[@]\"", false]
+        ],
+        explanation: "Quoted \"${servers[@]}\" expands each array element as one separate item."
+      },
+      {
+        question: "Which structure safely reads a file one complete line at a time?",
+        options: [
+          ["while IFS= read -r line", true],
+          ["for line in $(cat file)", false],
+          ["for line in $(ls file)", false],
+          ["until echo line", false]
+        ],
+        explanation: "The while-read pattern preserves full lines and avoids unwanted word splitting."
+      },
+      {
+        question: "Why is `IFS=` used before `read` in a file-reading loop?",
+        options: [
+          ["To preserve leading and trailing whitespace", true],
+          ["To make the file executable", false],
+          ["To count the file lines", false],
+          ["To enable debug tracing", false]
+        ],
+        explanation: "An empty IFS prevents read from trimming whitespace at the start and end of a line."
+      },
+      {
+        question: "What is the purpose of `-r` in `read -r line`?",
+        options: [
+          ["It prevents backslashes from being treated specially", true],
+          ["It makes the input read-only", false],
+          ["It reads the file in reverse", false],
+          ["It requires root access", false]
+        ],
+        explanation: "The -r option tells read not to interpret backslashes as escape characters."
+      },
+      {
+        question: "Why might `[[ -e \"$file\" ]] || continue` be used inside `for file in *.txt`?",
+        options: [
+          ["To safely skip an unmatched glob pattern", true],
+          ["To delete unreadable files", false],
+          ["To convert every file to text", false],
+          ["To make the loop infinite", false]
+        ],
+        explanation: "Without a match, the glob may remain literal; the file check safely skips it."
+      },
+      {
+        question: "Why should `for file in $(ls *.txt)` generally be avoided?",
+        options: [
+          ["It can break filenames containing spaces or special characters", true],
+          ["The ls command never returns filenames", false],
+          ["A for loop cannot process files", false],
+          ["Command substitution requires sudo", false]
+        ],
+        explanation: "Parsing ls output introduces unsafe word splitting. Use a glob directly instead."
+      },
+      {
+        question: "What is the most likely problem if a while-loop counter is never updated?",
+        options: [
+          ["The loop may run forever", true],
+          ["The script automatically fixes the counter", false],
+          ["Bash changes it into a for loop", false],
+          ["The loop always runs exactly twice", false]
+        ],
+        explanation: "If the condition never changes from true to false, the loop can become infinite."
+      },
+      {
+        question: "What is a nested loop?",
+        options: [
+          ["A loop placed inside another loop", true],
+          ["A loop stored in a hidden file", false],
+          ["A loop without do and done", false],
+          ["A loop executed only by root", false]
+        ],
+        explanation: "In a nested loop, the inner loop normally completes for each iteration of the outer loop."
+      },
+      {
+        question: "Which Bash construct automatically creates a numbered terminal menu?",
+        options: [
+          ["select", true],
+          ["export", false],
+          ["source", false],
+          ["readonly", false]
+        ],
+        explanation: "Select displays numbered choices and stores the selected item in a variable."
+      },
+      {
+        question: "Why can a variable changed inside `command | while read ...` appear unchanged after the loop?",
+        options: [
+          ["The loop may run in a subshell", true],
+          ["Read cannot assign variables", false],
+          ["Pipelines always make variables read-only", false],
+          ["While loops cannot count", false]
+        ],
+        explanation: "Pipeline components commonly run in subshells, so their variable changes may not reach the parent shell."
+      },
+      {
+        question: "Which feature can feed command output into a while loop without the common pipeline-subshell problem?",
+        options: [
+          ["Process substitution: `< <(command)`", true],
+          ["A comment: `# command`", false],
+          ["An alias only", false],
+          ["The command `logout`", false]
+        ],
+        explanation: "Process substitution supplies a readable stream while keeping the loop in the current shell."
+      },
+      {
+        question: "What is an important safety feature of a production retry loop?",
+        options: [
+          ["A maximum number of attempts", true],
+          ["No delay and no limit", false],
+          ["Running every command with sudo", false],
+          ["Deleting logs after every failure", false]
+        ],
+        explanation: "A maximum attempt count prevents a failing operation from retrying forever."
+      },
+      {
+        question: "What does `bash -n script.sh` check?",
+        options: [
+          ["Bash syntax without executing the script", true],
+          ["Whether every command will succeed", false],
+          ["Network connectivity", false],
+          ["File ownership only", false]
+        ],
+        explanation: "Bash -n parses the script for syntax errors, but it does not prove that the logic is correct."
+      },
+      {
+        question: "How does Bash normally decide whether a command used as a loop condition succeeded?",
+        options: [
+          ["Exit status 0 means success", true],
+          ["Any printed text means success", false],
+          ["Exit status 1 always means success", false],
+          ["The command must contain an if statement", false]
+        ],
+        explanation: "Bash conditions are based on command exit status: zero is success and nonzero is failure."
+      }
+    ];
+
+    let questions = [];
+    let answers = [];
+    let currentQuestion = 0;
+    let timeRemaining = QUIZ_SECONDS;
+    let timerId = null;
+    let submitted = false;
+
+    const quizSection = document.getElementById("quizSection");
+    const resultSection = document.getElementById("resultSection");
+    const questionNumber = document.getElementById("questionNumber");
+    const questionText = document.getElementById("questionText");
+    const answersBox = document.getElementById("answers");
+    const previousButton = document.getElementById("previousButton");
+    const nextButton = document.getElementById("nextButton");
+    const submitButton = document.getElementById("submitButton");
+    const questionMap = document.getElementById("questionMap");
+    const progressText = document.getElementById("progressText");
+    const answeredText = document.getElementById("answeredText");
+    const progressBar = document.getElementById("progressBar");
+    const timerText = document.getElementById("timerText");
+    const timerBox = document.getElementById("timerBox");
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function buildAttempt() {
+      return shuffle(questionBank).map((item) => ({
+        question: item.question,
+        explanation: item.explanation,
+        options: shuffle(item.options.map(([text, correct]) => ({ text, correct })))
+      }));
+    }
+
+    function startQuiz() {
+      clearInterval(timerId);
+      questions = buildAttempt();
+      answers = Array(questions.length).fill(null);
+      currentQuestion = 0;
+      timeRemaining = QUIZ_SECONDS;
+      submitted = false;
+      quizSection.classList.remove("hidden");
+      resultSection.classList.add("hidden");
+      timerBox.classList.remove("warning", "danger");
+      buildQuestionMap();
+      renderQuestion();
+      updateTimer();
+      timerId = setInterval(tickTimer, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestion() {
+      const item = questions[currentQuestion];
+      questionNumber.textContent = `Question ${currentQuestion + 1}`;
+      questionText.textContent = item.question;
+      answersBox.replaceChildren();
+
+      item.options.forEach((option, optionIndex) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer";
+        if (answers[currentQuestion] === optionIndex) {
+          button.classList.add("selected");
+        }
+
+        const letter = document.createElement("span");
+        letter.className = "letter";
+        letter.textContent = String.fromCharCode(65 + optionIndex);
+        button.append(letter, document.createTextNode(option.text));
+        button.addEventListener("click", () => selectAnswer(optionIndex));
+        answersBox.appendChild(button);
+      });
+
+      previousButton.disabled = currentQuestion === 0;
+      nextButton.disabled = currentQuestion === questions.length - 1;
+      progressText.textContent = `${currentQuestion + 1} / ${questions.length}`;
+      progressBar.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+      updateAnsweredStatus();
+      updateQuestionMap();
+    }
+
+    function selectAnswer(optionIndex) {
+      answers[currentQuestion] = optionIndex;
+      renderQuestion();
+    }
+
+    function buildQuestionMap() {
+      questionMap.replaceChildren();
+      questions.forEach((_, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "map-button";
+        button.textContent = index + 1;
+        button.setAttribute("aria-label", `Go to question ${index + 1}`);
+        button.addEventListener("click", () => {
+          currentQuestion = index;
+          renderQuestion();
+        });
+        questionMap.appendChild(button);
+      });
+    }
+
+    function updateQuestionMap() {
+      [...questionMap.children].forEach((button, index) => {
+        button.classList.toggle("answered", answers[index] !== null);
+        button.classList.toggle("current", index === currentQuestion);
+      });
+    }
+
+    function updateAnsweredStatus() {
+      const answered = answers.filter((answer) => answer !== null).length;
+      answeredText.textContent = `${answered} / ${questions.length}`;
+    }
+
+    function tickTimer() {
+      timeRemaining--;
+      updateTimer();
+      if (timeRemaining <= 0) {
+        submitQuiz(true);
+      }
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+      timerText.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerBox.classList.toggle("warning", timeRemaining <= 300 && timeRemaining > 60);
+      timerBox.classList.toggle("danger", timeRemaining <= 60);
+    }
+
+    function submitQuiz(timeExpired = false) {
+      if (submitted) return;
+
+      const unanswered = answers.filter((answer) => answer === null).length;
+      if (!timeExpired && unanswered > 0) {
+        const proceed = window.confirm(
+          `You have ${unanswered} unanswered question${unanswered === 1 ? "" : "s"}. Submit anyway?`
+        );
+        if (!proceed) return;
+      }
+
+      submitted = true;
+      clearInterval(timerId);
+      showResults(timeExpired);
+    }
+
+    function showResults(timeExpired) {
+      let correct = 0;
+      let unanswered = 0;
+
+      questions.forEach((item, index) => {
+        const selected = answers[index];
+        if (selected === null) {
+          unanswered++;
+        } else if (item.options[selected].correct) {
+          correct++;
+        }
+      });
+
+      const incorrect = questions.length - correct - unanswered;
+      const percentage = Math.round((correct / questions.length) * 100);
+
+      document.getElementById("scoreCircle").textContent = `${percentage}%`;
+      document.getElementById("correctCount").textContent = correct;
+      document.getElementById("incorrectCount").textContent = incorrect;
+      document.getElementById("unansweredCount").textContent = unanswered;
+
+      let message = "";
+      if (percentage >= 90) {
+        message = "Excellent — you have strong control of Bash loops.";
+      } else if (percentage >= 75) {
+        message = "Very good — review the missed explanations and practice the advanced lab.";
+      } else if (percentage >= 60) {
+        message = "Good progress — repeat the related lab tasks before reattempting.";
+      } else {
+        message = "Keep practicing — begin with fruits, counters, while loops, and file reading.";
+      }
+
+      if (timeExpired) {
+        message = `Time expired. ${message}`;
+      }
+
+      document.getElementById("resultMessage").textContent = message;
+      buildReview();
+      quizSection.classList.add("hidden");
+      resultSection.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function buildReview() {
+      const review = document.getElementById("review");
+      review.replaceChildren();
+
+      questions.forEach((item, index) => {
+        const selectedIndex = answers[index];
+        const selectedOption = selectedIndex === null ? null : item.options[selectedIndex];
+        const correctOption = item.options.find((option) => option.correct);
+        const isCorrect = selectedOption?.correct === true;
+
+        const article = document.createElement("article");
+        article.className = `review-item ${isCorrect ? "correct" : "incorrect"}`;
+
+        const heading = document.createElement("h3");
+        heading.textContent = `${index + 1}. ${item.question}`;
+
+        const yourAnswer = document.createElement("p");
+        yourAnswer.className = isCorrect ? "correct-text" : "incorrect-text";
+        yourAnswer.textContent = `Your answer: ${selectedOption ? selectedOption.text : "Not answered"}`;
+
+        const correctAnswer = document.createElement("p");
+        correctAnswer.className = "correct-text";
+        correctAnswer.textContent = `Correct answer: ${correctOption.text}`;
+
+        const explanation = document.createElement("p");
+        explanation.textContent = `Explanation: ${item.explanation}`;
+
+        article.append(heading, yourAnswer, correctAnswer, explanation);
+        review.appendChild(article);
+      });
+    }
+
+    previousButton.addEventListener("click", () => {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      }
+    });
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    document.getElementById("reattemptButton").addEventListener("click", startQuiz);
+
+    document.addEventListener("keydown", (event) => {
+      if (submitted) return;
+      if (event.key === "ArrowLeft" && currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      } else if (event.key === "ArrowRight" && currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      }
+    });
+
+    startQuiz();
+  </script>
+</body>
+</html>

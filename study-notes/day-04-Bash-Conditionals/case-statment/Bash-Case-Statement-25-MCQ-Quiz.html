@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Bash case statement quiz with timer, scoring, shuffled choices, and explanations.">
+  <title>Bash case Statement — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+    code { color: #a7f3d0; font-family: "SFMono-Regular", Consolas, monospace; }
+
+    .container {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.12; }
+    .hero p { max-width: 760px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label { color: var(--muted); font-size: .82rem; margin-top: 5px; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+    .question-card { padding: 22px; margin-bottom: 16px; }
+    .question-card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .question-number { color: var(--accent); margin-right: 6px; }
+    .topic-tag {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #173553;
+      color: #bfdbfe;
+      font-size: .7rem;
+      vertical-align: middle;
+    }
+
+    .options { display: grid; gap: 10px; }
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--accent); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--success); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--danger); }
+    .option input { margin-top: 4px; accent-color: var(--accent); }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+    .question-card.missed { border-color: var(--danger); }
+    .question-card.hidden-review { display: none; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--accent), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .review-button { display: none; }
+    .review-button.show { display: inline-block; }
+
+    .result-card { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result-card.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--accent); }
+    .result-message { color: var(--muted); }
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+      text-align: left;
+    }
+    .breakdown div { padding: 10px 12px; border-radius: 10px; background: var(--panel-2); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    footer { text-align: center; color: var(--muted); padding-top: 24px; }
+
+    @media (max-width: 700px) {
+      .stats, .breakdown { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Bash Scripting · Conditionals</p>
+      <h1>Bash <code>case</code> Statement — 25 MCQ Quiz</h1>
+      <p>Test syntax, patterns, wildcards, menus, exit statuses, practical troubleshooting, and the difference between <code>case</code> and <code>if</code>. Questions and choices reshuffle on every attempt.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary review-button" id="reviewButton" type="button">Review Missed Questions</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+      <div class="breakdown" id="breakdown"></div>
+    </section>
+
+    <footer><p>Prepared for Muhammad Khalid Khan · Bash Scripting Study Series</p></footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        topic: "Foundations",
+        q: "What is the main purpose of a Bash case statement?",
+        options: ["Match one value against multiple patterns", "Repeat commands forever", "Create a new shell", "Redirect standard error"],
+        answer: "Match one value against multiple patterns",
+        explanation: "case is a decision-making construct. It compares one value with patterns and runs the first matching branch."
+      },
+      {
+        topic: "Syntax",
+        q: "Which keyword starts a Bash case statement?",
+        options: ["case", "switch", "select", "match"],
+        answer: "case",
+        explanation: "Bash begins this conditional structure with the case keyword."
+      },
+      {
+        topic: "Syntax",
+        q: "Which keyword closes a case statement?",
+        options: ["esac", "fi", "done", "endcase"],
+        answer: "esac",
+        explanation: "esac closes the structure; it is the word case written backward."
+      },
+      {
+        topic: "Syntax",
+        q: "What does the keyword in introduce in case \"$value\" in?",
+        options: ["The list of patterns", "An input file", "An infinite loop", "A child process"],
+        answer: "The list of patterns",
+        explanation: "The in keyword begins the pattern-and-command branches that Bash will test."
+      },
+      {
+        topic: "Syntax",
+        q: "Which symbol normally ends one case branch?",
+        options: [";;", ";", "fi", "&&"],
+        answer: ";;",
+        explanation: "Double semicolons end the commands for the current pattern branch."
+      },
+      {
+        topic: "Patterns",
+        q: "What does y|Y) mean inside a case statement?",
+        options: ["Match y or Y", "Pipe y into Y", "Match y and Y together", "Redirect y to Y"],
+        answer: "Match y or Y",
+        explanation: "Within a case pattern, | separates alternatives. It is not a command pipeline here."
+      },
+      {
+        topic: "Patterns",
+        q: "What is the usual purpose of the *) branch?",
+        options: ["Handle values not matched earlier", "Multiply the input", "Repeat every branch", "Comment out the remaining code"],
+        answer: "Handle values not matched earlier",
+        explanation: "The * wildcard matches any value, so it is commonly used as the default branch."
+      },
+      {
+        topic: "Patterns",
+        q: "Why should the default * pattern normally appear last?",
+        options: ["If placed first, it can match everything before specific patterns", "Bash requires patterns in alphabetical order", "It only works after an exit command", "It must follow a while loop"],
+        answer: "If placed first, it can match everything before specific patterns",
+        explanation: "Bash selects the first matching pattern. A leading * would prevent later specific branches from being reached."
+      },
+      {
+        topic: "Patterns",
+        q: "Which case pattern matches any value that begins with log?",
+        options: ["log*)", "*log)", "log?)", "[log])"],
+        answer: "log*)",
+        explanation: "log* matches log followed by zero or more characters, such as log, logs, or logfile."
+      },
+      {
+        topic: "Patterns",
+        q: "Which case pattern matches exactly one character?",
+        options: ["?)", "*)", "+)", "...)"],
+        answer: "?)",
+        explanation: "The ? wildcard matches exactly one character in Bash pathname-style patterns."
+      },
+      {
+        topic: "Patterns",
+        q: "Which pattern matches one lowercase letter from a through z?",
+        options: ["[a-z])", "a-z)", "{a-z})", "(a..z))"],
+        answer: "[a-z])",
+        explanation: "A bracket expression such as [a-z] matches one character within the specified range."
+      },
+      {
+        topic: "Execution",
+        q: "If two patterns could match, which branch does Bash run?",
+        options: ["The first matching branch", "The last matching branch", "Every matching branch", "A randomly selected branch"],
+        answer: "The first matching branch",
+        explanation: "Patterns are checked from top to bottom, and normal ;; termination stops matching after the first successful branch."
+      },
+      {
+        topic: "Execution",
+        q: "Is a case statement a loop?",
+        options: ["No, it selects a branch", "Yes, it repeats until break", "Yes, but only with *", "Only when it contains echo"],
+        answer: "No, it selects a branch",
+        explanation: "case makes one decision per execution. A loop must be added separately if repetition is required."
+      },
+      {
+        topic: "Safety",
+        q: "Why is case \"$answer\" in a good style?",
+        options: ["Quoting preserves empty values, spaces, and wildcard characters", "Quotes convert the value to an integer", "Quotes automatically lowercase the value", "Quotes make the script run as root"],
+        answer: "Quoting preserves empty values, spaces, and wildcard characters",
+        explanation: "Double quotes keep the expanded value intact and make the intent clear."
+      },
+      {
+        topic: "Practical",
+        q: "Which branch accepts y, Y, yes, Yes, and YES?",
+        options: ["y|Y|yes|Yes|YES)", "y,Y,yes,Yes,YES)", "[y Y yes Yes YES])", "y && Y && yes)"],
+        answer: "y|Y|yes|Yes|YES)",
+        explanation: "Alternative case patterns are separated with | inside the same branch."
+      },
+      {
+        topic: "Practical",
+        q: "In case \"$1\" in, what value is being examined?",
+        options: ["The first command-line argument", "The script name", "The argument count", "All command-line arguments"],
+        answer: "The first command-line argument",
+        explanation: "$1 contains the first positional parameter passed to the script."
+      },
+      {
+        topic: "Practical",
+        q: "Which structure is most suitable for actions such as start, stop, restart, and status?",
+        options: ["case", "A single echo command", "An arithmetic expansion", "A here-document"],
+        answer: "case",
+        explanation: "case clearly maps one action value to several named command branches."
+      },
+      {
+        topic: "Error Handling",
+        q: "What should an invalid-option branch normally return in a command-line script?",
+        options: ["A nonzero exit status", "Always exit 0", "No status at all", "The user's UID"],
+        answer: "A nonzero exit status",
+        explanation: "Invalid input represents failure, so a nonzero status such as exit 1 is appropriate."
+      },
+      {
+        topic: "Error Handling",
+        q: "Why send an invalid-option message with >&2?",
+        options: ["It sends the error to stderr", "It appends the message to $2", "It makes the message green", "It suppresses the message"],
+        answer: "It sends the error to stderr",
+        explanation: ">&2 redirects the echo command's output to file descriptor 2, the standard error stream."
+      },
+      {
+        topic: "Comparison",
+        q: "When is if usually clearer than case?",
+        options: ["When testing numeric comparisons or several unrelated conditions", "When matching one option against simple named patterns", "When accepting start or stop", "When matching file extensions"],
+        answer: "When testing numeric comparisons or several unrelated conditions",
+        explanation: "if is generally better for arithmetic tests, file tests, command statuses, and complex Boolean logic."
+      },
+      {
+        topic: "Comparison",
+        q: "When is case usually clearer than a long if/elif chain?",
+        options: ["When comparing one value with many patterns", "When repeating a command ten times", "When calculating multiplication", "When redirecting a pipeline"],
+        answer: "When comparing one value with many patterns",
+        explanation: "case provides a compact, readable layout when one value determines which action to take."
+      },
+      {
+        topic: "Troubleshooting",
+        q: "What is wrong with ending a case statement using fi?",
+        options: ["case must end with esac", "fi works only as root", "fi repeats the branch", "Nothing; fi and esac are identical"],
+        answer: "case must end with esac",
+        explanation: "fi closes an if statement; esac closes a case statement."
+      },
+      {
+        topic: "Troubleshooting",
+        q: "What is wrong with writing yes: instead of yes) for a case pattern?",
+        options: ["A case pattern is terminated by )", "A colon always starts a loop", "A colon redirects stderr", "Patterns must end with ("],
+        answer: "A case pattern is terminated by )",
+        explanation: "Each pattern list is followed by a closing parenthesis before its command block."
+      },
+      {
+        topic: "Advanced",
+        q: "What does ;& do at the end of a Bash case branch?",
+        options: ["Continue directly into the next branch's commands", "End the entire script", "Run the branch in the background", "Combine stdout and stderr"],
+        answer: "Continue directly into the next branch's commands",
+        explanation: "Bash ;& performs fall-through: after the matched commands, it executes the next branch's commands without testing its pattern."
+      },
+      {
+        topic: "Advanced",
+        q: "What does ;;& do at the end of a Bash case branch?",
+        options: ["Continue testing later patterns", "Repeat the same branch forever", "Ignore every later pattern", "Run the next command as root"],
+        answer: "Continue testing later patterns",
+        explanation: "Bash ;;& resumes pattern testing with the next branch, allowing additional matching branches to run."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false,
+      reviewingMissed: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+    const breakdown = document.getElementById("breakdown");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({ ...question, options: shuffle(question.options) }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      state.reviewingMissed = false;
+      resultCard.classList.remove("show");
+      reviewButton.classList.remove("show");
+      reviewButton.textContent = "Review Missed Questions";
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        const tag = document.createElement("span");
+        tag.className = "topic-tag";
+        tag.textContent = question.topic;
+        heading.append(number, document.createTextNode(` ${question.q}`), tag);
+
+        const options = document.createElement("div");
+        options.className = "options";
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+        card.append(heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const unanswered = state.questions.length - answered;
+      if (!autoSubmitted && unanswered > 0 && !window.confirm(`${unanswered} question(s) are unanswered. Submit anyway?`)) return;
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+      let correct = 0;
+      const topicResults = {};
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const isCorrect = Boolean(selected && selected.value === question.answer);
+        topicResults[question.topic] ??= { correct: 0, total: 0 };
+        topicResults[question.topic].total += 1;
+
+        card.querySelectorAll(".option").forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && !isCorrect) label.classList.add("incorrect");
+        });
+
+        if (isCorrect) {
+          correct += 1;
+          topicResults[question.topic].correct += 1;
+        } else {
+          card.classList.add("missed");
+        }
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+      if (percentage >= 90) resultMessage.textContent = "Excellent — you understand Bash case statements confidently.";
+      else if (percentage >= 80) resultMessage.textContent = "Passed — review the missed explanations and practise the related examples.";
+      else if (percentage >= 70) resultMessage.textContent = "Developing — revisit patterns, branch endings, and practical menu scripts.";
+      else resultMessage.textContent = "Foundation review required — study the notes, practise the syntax, and reattempt.";
+
+      breakdown.innerHTML = "";
+      Object.entries(topicResults).sort().forEach(([topic, result]) => {
+        const item = document.createElement("div");
+        item.textContent = `${topic}: ${result.correct}/${result.total}`;
+        breakdown.append(item);
+      });
+
+      submitButton.disabled = true;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      if (correct < state.questions.length) reviewButton.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function toggleMissedReview() {
+      if (!state.submitted) return;
+      state.reviewingMissed = !state.reviewingMissed;
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        card.classList.toggle("hidden-review", state.reviewingMissed && !card.classList.contains("missed"));
+      });
+      reviewButton.textContent = state.reviewingMissed ? "Show All Questions" : "Review Missed Questions";
+      if (state.reviewingMissed) quizForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    reviewButton.addEventListener("click", toggleMissedReview);
+    createAttempt();
+  </script>
+</body>
+</html>

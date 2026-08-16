@@ -1,0 +1,5 @@
+2026-07-28 11:00:00 INFO Application started
+2026-07-28 11:01:00 ERROR Database connection failed
+2026-07-28 11:02:00 WARNING Retry scheduled
+2026-07-28 11:03:00 ERROR Retry failed
+

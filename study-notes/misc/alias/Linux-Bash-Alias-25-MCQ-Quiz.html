@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Linux Bash alias quiz with timer, scoring, shuffled choices, and answer explanations.">
+  <title>Linux Bash Alias — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.12; }
+    .hero p { max-width: 760px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label { color: var(--muted); font-size: .82rem; margin-top: 5px; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+    .question-card { padding: 22px; margin-bottom: 16px; }
+    .question-card.missed { border-color: var(--danger); }
+    .question-card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .question-number { color: var(--accent); margin-right: 6px; }
+
+    .options { display: grid; gap: 10px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--accent); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--success); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--danger); }
+    .option input { margin-top: 4px; accent-color: var(--accent); }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--accent), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .hidden { display: none; }
+
+    .result-card { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result-card.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--accent); }
+    .result-message { color: var(--muted); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    footer { text-align: center; color: var(--muted); padding-top: 24px; }
+    footer a { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Linux · Bash · Alias</p>
+      <h1>Linux Bash Alias — 25 MCQ Quiz</h1>
+      <p>Test alias fundamentals, syntax, temporary and permanent aliases, inspection, removal, troubleshooting, safe usage, and the difference between aliases, functions, and scripts. Questions and answer choices are shuffled on every attempt.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+      <button class="button secondary hidden" id="reviewButton" type="button">Review Missed Questions</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan · <a href="https://github.com/krmaryum">GitHub: krmaryum</a></p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        "q": "What is the purpose of a shebang in an executable script?",
+        "options": [
+          "Identify the interpreter",
+          "Grant root privileges",
+          "Create environment variables",
+          "Enable Git tracking"
+        ],
+        "answer": "Identify the interpreter",
+        "explanation": "When a script is executed directly, the kernel uses the shebang to locate the requested interpreter."
+      },
+      {
+        "q": "What is the main difference between sourcing and executing a script?",
+        "options": [
+          "Sourcing runs in the current shell",
+          "Sourcing always runs as root",
+          "Execution ignores the shebang",
+          "Execution cannot accept arguments"
+        ],
+        "answer": "Sourcing runs in the current shell",
+        "explanation": "Sourced commands run in the current shell, so directory and variable changes can persist."
+      },
+      {
+        "q": "Which expansion safely preserves all positional arguments separately?",
+        "options": [
+          "\"$@\"",
+          "\"$*\"",
+          "$@",
+          "$#"
+        ],
+        "answer": "\"$@\"",
+        "explanation": "Quoted $@ expands each positional parameter as a separate word, preserving spaces inside arguments."
+      },
+      {
+        "q": "Why should variable expansions normally be double-quoted?",
+        "options": [
+          "Prevent unintended word splitting and globbing",
+          "Convert every value to an integer",
+          "Export variables automatically",
+          "Suppress every command error"
+        ],
+        "answer": "Prevent unintended word splitting and globbing",
+        "explanation": "Quotes preserve the expanded value as one argument and prevent pathname expansion."
+      },
+      {
+        "q": "Which syntax captures a command's stdout?",
+        "options": [
+          "$(command)",
+          "${command}",
+          "((command))",
+          "[[ command ]]"
+        ],
+        "answer": "$(command)",
+        "explanation": "Command substitution runs the command and captures stdout, with trailing newline characters removed."
+      },
+      {
+        "q": "Which file descriptor represents stderr?",
+        "options": [
+          "2",
+          "0",
+          "1",
+          "3"
+        ],
+        "answer": "2",
+        "explanation": "Standard input is 0, standard output is 1, and standard error is 2."
+      },
+      {
+        "q": "What does command >all.log 2>&1 do?",
+        "options": [
+          "Send stdout and stderr to all.log",
+          "Send only stderr to all.log",
+          "Read stdin from all.log",
+          "Discard every output stream"
+        ],
+        "answer": "Send stdout and stderr to all.log",
+        "explanation": "Stdout is redirected first, then stderr is redirected to stdout's current destination."
+      },
+      {
+        "q": "What does a zero command exit status normally mean?",
+        "options": [
+          "Success",
+          "Syntax error",
+          "Permission denied",
+          "Command not found"
+        ],
+        "answer": "Success",
+        "explanation": "Unix commands normally use status 0 for success and nonzero statuses for failure or defined conditions."
+      },
+      {
+        "q": "Which construct is Bash-specific and supports safer pattern matching?",
+        "options": [
+          "[[ ]]",
+          "[ ]",
+          "test only",
+          "case cannot match patterns"
+        ],
+        "answer": "[[ ]]",
+        "explanation": "Double brackets are a Bash conditional construct with safer expansion behavior and pattern/regex features."
+      },
+      {
+        "q": "Which loop best reads a file while preserving leading/trailing whitespace and backslashes?",
+        "options": [
+          "while IFS= read -r line",
+          "for line in $(cat file)",
+          "for line in `ls`",
+          "while read line without IFS or -r"
+        ],
+        "answer": "while IFS= read -r line",
+        "explanation": "IFS= and read -r preserve whitespace and prevent backslash interpretation."
+      },
+      {
+        "q": "What does continue do inside a loop?",
+        "options": [
+          "Skip the remainder of the current iteration",
+          "Exit the entire script",
+          "Exit every nested loop",
+          "Restart the shell"
+        ],
+        "answer": "Skip the remainder of the current iteration",
+        "explanation": "continue moves directly to the next loop iteration."
+      },
+      {
+        "q": "How should a Bash function return string data to its caller?",
+        "options": [
+          "Write data to stdout",
+          "Use return with the string",
+          "Use exit with the string",
+          "Always create a global variable"
+        ],
+        "answer": "Write data to stdout",
+        "explanation": "Bash return supplies a numeric status; stdout is commonly used for function data."
+      },
+      {
+        "q": "Why use local variables inside functions?",
+        "options": [
+          "Reduce unintended global side effects",
+          "Make every variable exported",
+          "Bypass input validation",
+          "Run the function as root"
+        ],
+        "answer": "Reduce unintended global side effects",
+        "explanation": "local limits scope and makes functions easier to understand, reuse, and test."
+      },
+      {
+        "q": "Which expansion preserves every array element as a separate argument?",
+        "options": [
+          "\"${array[@]}\"",
+          "\"${array[*]}\"",
+          "${array[@]}",
+          "\"$array\""
+        ],
+        "answer": "\"${array[@]}\"",
+        "explanation": "Quoted array[@] preserves element boundaries, including elements containing spaces."
+      },
+      {
+        "q": "What does getopts help a script do?",
+        "options": [
+          "Parse short command-line options",
+          "Install missing packages",
+          "Encrypt environment variables",
+          "Schedule cron jobs"
+        ],
+        "answer": "Parse short command-line options",
+        "explanation": "getopts processes short options and option arguments; the script must still validate values."
+      },
+      {
+        "q": "What does set -o pipefail change?",
+        "options": [
+          "A pipeline fails when any component fails",
+          "Every pipeline runs in the background",
+          "Pipes write only to stderr",
+          "Commands stop accepting stdin"
+        ],
+        "answer": "A pipeline fails when any component fails",
+        "explanation": "Without pipefail, a pipeline normally reports the last command's status."
+      },
+      {
+        "q": "Why can ((count++)) stop a script using set -e when count starts at zero?",
+        "options": [
+          "The arithmetic expression returns status 1",
+          "The variable becomes unset",
+          "Increment is invalid Bash syntax",
+          "The command sends SIGTERM"
+        ],
+        "answer": "The arithmetic expression returns status 1",
+        "explanation": "Post-increment evaluates to the old value; zero produces an unsuccessful arithmetic status."
+      },
+      {
+        "q": "What is the safest standard tool for creating a unique temporary directory?",
+        "options": [
+          "mktemp -d",
+          "touch /tmp/file",
+          "mkdir /tmp/data",
+          "echo $ > /tmp/name"
+        ],
+        "answer": "mktemp -d",
+        "explanation": "mktemp creates a unique name safely, reducing collisions and predictable-name races."
+      },
+      {
+        "q": "Why capture $? at the beginning of an EXIT cleanup trap?",
+        "options": [
+          "Preserve the original script status",
+          "Convert stderr to stdout",
+          "Enable option parsing",
+          "Discover the parent PID"
+        ],
+        "answer": "Preserve the original script status",
+        "explanation": "Cleanup commands can change $?, so the original result must be captured first."
+      },
+      {
+        "q": "What makes an administrative script idempotent?",
+        "options": [
+          "Repeated runs do not create unintended additional changes",
+          "It always runs with sudo",
+          "It deletes old output each time",
+          "It uses only one function"
+        ],
+        "answer": "Repeated runs do not create unintended additional changes",
+        "explanation": "Idempotent automation compares current and desired state and changes only what is required."
+      },
+      {
+        "q": "Why is eval dangerous with user-controlled input?",
+        "options": [
+          "It can turn data into executable shell code",
+          "It disables stdout",
+          "It cannot access variables",
+          "It forces a syntax check"
+        ],
+        "answer": "It can turn data into executable shell code",
+        "explanation": "eval reparses constructed text as shell syntax, enabling command injection if input is untrusted."
+      },
+      {
+        "q": "A variable changed inside a piped while loop is unchanged afterward. What is the likely cause?",
+        "options": [
+          "The loop ran in a subshell",
+          "The variable was automatically readonly",
+          "read cannot assign values",
+          "The pipeline enabled sudo"
+        ],
+        "answer": "The loop ran in a subshell",
+        "explanation": "Pipeline components often execute in subshells. Process substitution can keep the loop in the current shell."
+      },
+      {
+        "q": "A script reports /usr/bin/env: 'bash\\r': No such file or directory. What is the likely cause?",
+        "options": [
+          "Windows CRLF line endings",
+          "Missing execute bit only",
+          "An empty PATH only",
+          "A failed arithmetic expression"
+        ],
+        "answer": "Windows CRLF line endings",
+        "explanation": "The carriage return becomes part of the interpreter name. Convert the file to Unix LF endings."
+      },
+      {
+        "q": "Why can a script work manually but fail through cron?",
+        "options": [
+          "Cron has a minimal environment and may use another user or directory",
+          "Cron cannot execute Bash",
+          "Cron always blocks file output",
+          "Cron requires an interactive terminal"
+        ],
+        "answer": "Cron has a minimal environment and may use another user or directory",
+        "explanation": "PATH, user, working directory, environment variables, credentials, and shell initialization often differ."
+      },
+      {
+        "q": "What should a production Bash code review include?",
+        "options": [
+          "Input validation, quoting, failure handling, security, idempotency, and tests",
+          "Only whether the script runs once",
+          "Only line count and comments",
+          "Only the shebang and filename"
+        ],
+        "answer": "Input validation, quoting, failure handling, security, idempotency, and tests",
+        "explanation": "Production review covers behavior, safety, maintainability, failure paths, repeated execution, and security."
+      }
+    ];
+
+    const aliasQuizData = [
+      {
+        "q": "What is a Bash alias?",
+        "options": [
+          "A shortcut name for a command",
+          "A special type of Linux user",
+          "A compressed Bash script",
+          "A command that changes file ownership"
+        ],
+        "answer": "A shortcut name for a command",
+        "explanation": "An alias gives a short or memorable name to a command that is long or used frequently."
+      },
+      {
+        "q": "What is a main benefit of using aliases?",
+        "options": [
+          "They reduce repeated typing and common mistakes",
+          "They automatically grant root access",
+          "They permanently modify Linux commands",
+          "They make every command run in the background"
+        ],
+        "answer": "They reduce repeated typing and common mistakes",
+        "explanation": "Aliases improve terminal productivity by shortening frequently used commands and reducing typing errors."
+      },
+      {
+        "q": "Which command correctly creates an alias named ll?",
+        "options": [
+          "alias ll='ls -la'",
+          "alias ll = 'ls -la'",
+          "ll alias 'ls -la'",
+          "alias='ll' ls -la"
+        ],
+        "answer": "alias ll='ls -la'",
+        "explanation": "The correct syntax is alias, followed by the shortcut name, an equals sign without spaces, and the quoted command."
+      },
+      {
+        "q": "Why is alias ll = 'ls -la' incorrect?",
+        "options": [
+          "Spaces are not allowed around the equals sign",
+          "The ls command cannot be aliased",
+          "Alias names must contain a hyphen",
+          "Double quotes are always required"
+        ],
+        "answer": "Spaces are not allowed around the equals sign",
+        "explanation": "A Bash assignment-like alias definition must not contain spaces around =."
+      },
+      {
+        "q": "After running alias ll='ls -la', what does entering ll execute?",
+        "options": [
+          "ls -la",
+          "ls only",
+          "la only",
+          "alias ll"
+        ],
+        "answer": "ls -la",
+        "explanation": "Bash expands the shortcut ll to its associated command, ls -la."
+      },
+      {
+        "q": "How long does an alias created directly in a terminal normally last?",
+        "options": [
+          "Until that shell session ends",
+          "Until the computer is reinstalled",
+          "Exactly 24 hours",
+          "Until the command finishes once"
+        ],
+        "answer": "Until that shell session ends",
+        "explanation": "A temporary alias is stored in the current shell's memory and disappears when that shell closes."
+      },
+      {
+        "q": "Where should a Bash alias normally be saved to load in future interactive sessions?",
+        "options": [
+          "~/.bashrc",
+          "/etc/passwd",
+          "~/.gitconfig",
+          "/var/log/aliases"
+        ],
+        "answer": "~/.bashrc",
+        "explanation": "User-specific interactive Bash aliases are commonly stored in ~/.bashrc."
+      },
+      {
+        "q": "Which command reloads ~/.bashrc in the current shell?",
+        "options": [
+          "source ~/.bashrc",
+          "bash -n ~/.bashrc",
+          "chmod +x ~/.bashrc",
+          "unalias ~/.bashrc"
+        ],
+        "answer": "source ~/.bashrc",
+        "explanation": "source reads and executes the file in the current shell, making new definitions available immediately."
+      },
+      {
+        "q": "Which sequence saves and exits a file in Vim?",
+        "options": [
+          "Esc, :wq, Enter",
+          "Ctrl+O, Enter, Ctrl+X",
+          "Ctrl+C, Ctrl+V, Enter",
+          "Esc, :alias, Enter"
+        ],
+        "answer": "Esc, :wq, Enter",
+        "explanation": "In Vim, :wq writes the file and quits. Ctrl+O and Ctrl+X are commonly used in Nano, not Vim."
+      },
+      {
+        "q": "Which command displays all aliases active in the current shell?",
+        "options": [
+          "alias",
+          "aliases --all",
+          "type --aliases",
+          "show ~/.bashrc"
+        ],
+        "answer": "alias",
+        "explanation": "Running alias without a name lists all aliases currently defined in the shell."
+      },
+      {
+        "q": "Which command displays the definition of the specific alias ll?",
+        "options": [
+          "alias ll",
+          "show ll",
+          "ll --definition",
+          "source ll"
+        ],
+        "answer": "alias ll",
+        "explanation": "Providing a name to the alias builtin displays that alias's current definition."
+      },
+      {
+        "q": "What can type ll reveal?",
+        "options": [
+          "Whether ll is an alias, function, builtin, or command",
+          "The owner of the ~/.bashrc file only",
+          "The last time ll was executed",
+          "The exit status of ll"
+        ],
+        "answer": "Whether ll is an alias, function, builtin, or command",
+        "explanation": "The type builtin explains how Bash resolves a command name."
+      },
+      {
+        "q": "Which command removes the alias ll from the current shell?",
+        "options": [
+          "unalias ll",
+          "rm alias ll",
+          "alias --delete ll",
+          "unset ~/.bashrc ll"
+        ],
+        "answer": "unalias ll",
+        "explanation": "unalias followed by a name removes that alias from the current shell."
+      },
+      {
+        "q": "What does unalias -a do?",
+        "options": [
+          "Removes all aliases from the current shell",
+          "Adds all aliases from ~/.bashrc",
+          "Displays only administrative aliases",
+          "Deletes the ~/.bashrc file"
+        ],
+        "answer": "Removes all aliases from the current shell",
+        "explanation": "The -a option tells unalias to remove every currently defined alias."
+      },
+      {
+        "q": "Why might ll still work after its line is deleted from ~/.bashrc and the file is sourced?",
+        "options": [
+          "The alias is still stored in the current shell's memory",
+          "The ls command recreates it automatically",
+          "source always restores deleted lines",
+          "The alias has become a Linux kernel command"
+        ],
+        "answer": "The alias is still stored in the current shell's memory",
+        "explanation": "Sourcing reads definitions that remain in the file, but it does not automatically remove definitions already held in memory. Use unalias ll."
+      },
+      {
+        "q": "After permanently deleting an alias from ~/.bashrc, what will opening a new terminal normally do?",
+        "options": [
+          "Start a fresh shell without loading that alias",
+          "Restore the alias from the kernel",
+          "Delete every other alias",
+          "Prevent Bash from starting"
+        ],
+        "answer": "Start a fresh shell without loading that alias",
+        "explanation": "A new shell reads the current ~/.bashrc; a deleted alias line is no longer loaded."
+      },
+      {
+        "q": "What does alias today='date' allow you to do?",
+        "options": [
+          "Run date by entering today",
+          "Change the system date automatically",
+          "Create a file named today",
+          "Display the calendar for one year"
+        ],
+        "answer": "Run date by entering today",
+        "explanation": "The alias substitutes today with the date command; it does not change the system clock."
+      },
+      {
+        "q": "Which command is associated with the example alias ports?",
+        "options": [
+          "ss -tulnp",
+          "hostname -I",
+          "git status",
+          "sudo apt update"
+        ],
+        "answer": "ss -tulnp",
+        "explanation": "The notes use alias ports='ss -tulnp' to display listening network ports and related information."
+      },
+      {
+        "q": "Which command is associated with the example alias myip?",
+        "options": [
+          "hostname -I",
+          "ss -tulnp",
+          "ip route delete",
+          "whoami"
+        ],
+        "answer": "hostname -I",
+        "explanation": "The example alias myip expands to hostname -I, which displays the system's assigned IP addresses."
+      },
+      {
+        "q": "What is the purpose of alias rm='rm -i'?",
+        "options": [
+          "Ask for confirmation before removing files",
+          "Remove files without any warning",
+          "Restore files after deletion",
+          "Run rm with root privileges"
+        ],
+        "answer": "Ask for confirmation before removing files",
+        "explanation": "The -i option makes rm interactive and asks before each removal, which can help beginners avoid mistakes."
+      },
+      {
+        "q": "Does alias ll='ls -la' modify or delete the original ls command?",
+        "options": [
+          "No, it only creates a shortcut",
+          "Yes, it permanently replaces ls",
+          "Yes, but only for root",
+          "No, because it creates a new executable file"
+        ],
+        "answer": "No, it only creates a shortcut",
+        "explanation": "An alias changes how the shell expands a name; it does not alter the underlying command."
+      },
+      {
+        "q": "Where are aliases normally expanded by default?",
+        "options": [
+          "Interactive Bash shells",
+          "Every non-interactive script",
+          "The Linux kernel",
+          "Only inside systemd services"
+        ],
+        "answer": "Interactive Bash shells",
+        "explanation": "Aliases are primarily an interactive convenience and are not expanded in non-interactive Bash scripts by default."
+      },
+      {
+        "q": "How can you bypass an alias named ls for one command invocation?",
+        "options": [
+          "Use command ls or \\ls",
+          "Delete /bin/ls",
+          "Run source ls",
+          "Use alias -a ls"
+        ],
+        "answer": "Use command ls or \\ls",
+        "explanation": "The command builtin or a leading backslash bypasses alias expansion for that invocation."
+      },
+      {
+        "q": "When is a Bash function generally better than an alias?",
+        "options": [
+          "When logic or flexible argument placement is required",
+          "When shortening the clear command",
+          "When displaying ls -la interactively",
+          "When a command contains no arguments"
+        ],
+        "answer": "When logic or flexible argument placement is required",
+        "explanation": "Functions support parameters, conditionals, multiple commands, and controlled argument placement; aliases mainly perform simple text substitution."
+      },
+      {
+        "q": "Why should a Bash script not depend on a user's interactive aliases?",
+        "options": [
+          "Aliases may not expand and can differ between environments",
+          "Aliases always make scripts run as root",
+          "Scripts cannot execute external commands",
+          "Aliases automatically disable error handling"
+        ],
+        "answer": "Aliases may not expand and can differ between environments",
+        "explanation": "Reliable scripts should use explicit commands or functions because interactive aliases may be unavailable or defined differently for another user."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(aliasQuizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      resultCard.classList.remove("show");
+      reviewButton.classList.add("hidden");
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+
+        card.append(heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const unanswered = state.questions.length - answered;
+      if (!autoSubmitted && unanswered > 0) {
+        const proceed = window.confirm(`You still have ${unanswered} unanswered question${unanswered === 1 ? "" : "s"}. Submit anyway?`);
+        if (!proceed) return;
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (selected && selected.value === question.answer) {
+          correct += 1;
+        } else {
+          card.classList.add("missed");
+        }
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — you understand Bash aliases, their lifecycle, and their safe practical use.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent = "Passed — review the missed explanations and repeat the alias lab for stronger command recall.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent = "Developing — revisit temporary versus permanent aliases, inspection, removal, and troubleshooting.";
+      } else {
+        resultMessage.textContent = "Foundation review required — study the alias notes, practise each command, and reattempt the quiz.";
+      }
+
+      submitButton.disabled = true;
+      reviewButton.classList.toggle("hidden", correct === state.questions.length);
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    reviewButton.addEventListener("click", () => {
+      const firstMissed = quizForm.querySelector(".question-card.missed");
+      if (firstMissed) firstMissed.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    createAttempt();
+  </script>
+</body>
+</html>

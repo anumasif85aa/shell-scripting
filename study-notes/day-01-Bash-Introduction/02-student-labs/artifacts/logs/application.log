@@ -1,0 +1,6 @@
+2026-07-28 09:00:00 INFO Application started
+2026-07-28 09:01:15 WARNING Response time is high
+2026-07-28 09:02:30 ERROR Database connection failed
+2026-07-28 09:03:10 INFO Retrying connection
+2026-07-28 09:03:20 ERROR Retry failed
+

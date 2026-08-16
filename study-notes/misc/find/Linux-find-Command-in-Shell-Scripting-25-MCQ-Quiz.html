@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Linux find command quiz with timer, scoring, answer checking, explanations, topic breakdown, and shuffled reattempts.">
+  <title>Linux find Command in Shell Scripting — 25 MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06101d;
+      --panel: #0e1c2e;
+      --panel-2: #14263c;
+      --panel-3: #091625;
+      --text: #edf6ff;
+      --muted: #a6b7cc;
+      --accent: #45d6c8;
+      --accent-2: #62a8ff;
+      --success: #38d996;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29415f;
+      --shadow: 0 18px 52px rgb(0 0 0 / 30%);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 95% 0%, rgb(37 99 235 / 19%), transparent 31rem),
+        radial-gradient(circle at 5% 8%, rgb(20 184 166 / 15%), transparent 29rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button,
+    input { font: inherit; }
+
+    code {
+      padding: .1em .34em;
+      border: 1px solid rgb(98 168 255 / 25%);
+      border-radius: 5px;
+      background: #071321;
+      color: #bcecff;
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .94em;
+    }
+
+    .container {
+      width: min(1020px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 64px;
+    }
+
+    .hero,
+    .toolbar,
+    .question-card,
+    .result-card {
+      background: rgb(14 28 46 / 95%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: clamp(22px, 5vw, 34px); }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 850;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      line-height: 1.12;
+    }
+
+    .hero > p:not(.eyebrow) {
+      max-width: 820px;
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--panel-2);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .stat strong { font-size: 1.12rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      margin: 18px 0;
+      padding: 14px 18px;
+    }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #071321;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .timer {
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer.warning { color: var(--warning); }
+
+    .status {
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .question-card {
+      margin-bottom: 16px;
+      padding: 22px;
+      scroll-margin-top: 105px;
+    }
+
+    .question-card.unanswered {
+      border-color: var(--warning);
+      box-shadow: 0 0 0 2px rgb(251 191 36 / 13%), var(--shadow);
+    }
+
+    .question-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .question-number {
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .topic-badge {
+      padding: 3px 9px;
+      border: 1px solid rgb(98 168 255 / 38%);
+      border-radius: 999px;
+      background: rgb(37 99 235 / 12%);
+      color: #a9d1ff;
+      font-size: .72rem;
+      font-weight: 750;
+    }
+
+    .question-card h2 {
+      margin: 0 0 16px;
+      font-size: 1.06rem;
+      font-weight: 760;
+    }
+
+    .options { display: grid; gap: 10px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-3);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-2);
+    }
+
+    .option:has(input:focus-visible) {
+      outline: 3px solid rgb(98 168 255 / 42%);
+      outline-offset: 2px;
+    }
+
+    .option:has(input:checked) {
+      border-color: var(--accent);
+      background: #11334a;
+    }
+
+    .option.correct {
+      border-color: var(--success);
+      background: rgb(16 100 71 / 45%);
+    }
+
+    .option.incorrect {
+      border-color: var(--danger);
+      background: rgb(126 28 53 / 43%);
+    }
+
+    .option input {
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #071421;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+    .explanation strong { color: var(--text); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #03131d;
+      background: linear-gradient(135deg, var(--accent), #7dd3fc);
+    }
+
+    .secondary {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .button:hover:not(:disabled) { filter: brightness(1.08); }
+    .button:disabled { cursor: not-allowed; opacity: .5; }
+    .button[hidden] { display: none; }
+
+    .result-card {
+      display: none;
+      margin: 20px 0;
+      padding: 26px;
+      text-align: center;
+      scroll-margin-top: 105px;
+    }
+
+    .result-card.show { display: block; }
+
+    .score {
+      color: var(--accent);
+      font-size: clamp(2.5rem, 8vw, 4.8rem);
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-message { color: var(--muted); }
+
+    .breakdown-wrap {
+      overflow-x: auto;
+      margin-top: 22px;
+    }
+
+    .breakdown {
+      width: min(100%, 680px);
+      margin: 0 auto;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .breakdown th,
+    .breakdown td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breakdown th { color: var(--accent); }
+    .breakdown td:last-child,
+    .breakdown th:last-child { text-align: right; }
+
+    .review-missed .question-card[data-result="correct"] { display: none; }
+
+    footer {
+      padding-top: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      .container { width: min(100% - 18px, 1020px); padding-top: 10px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar { grid-template-columns: 1fr auto; top: 5px; padding: 12px; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+      .question-card { padding: 18px 15px; }
+      .option { padding: 12px; }
+    }
+
+    @media print {
+      .toolbar,
+      .actions { display: none; }
+      body { background: #fff; color: #111; }
+      .hero,
+      .question-card,
+      .result-card { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Linux Administration · Shell Scripting</p>
+      <h1>Linux <code>find</code> Command — 25 MCQ Quiz</h1>
+      <p>Test search paths, name and type filters, size and time tests, logical expressions, <code>-exec</code>, safe deletion, and reliable filename processing. Questions and choices are freshly shuffled on every attempt.</p>
+
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Every answer</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div class="status" id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reviewButton" type="button" hidden>Review Missed</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+      <div class="breakdown-wrap">
+        <table class="breakdown">
+          <thead>
+            <tr><th>Topic</th><th>Score</th></tr>
+          </thead>
+          <tbody id="breakdownBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p>Study the command, test the result, and preview before destructive actions.</p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        category: "Foundations",
+        q: "What is the main purpose of the Linux find command?",
+        options: [
+          "Search a directory tree using conditions and actions",
+          "Display only the current working directory",
+          "Search text inside files only",
+          "Create a compressed archive"
+        ],
+        answer: "Search a directory tree using conditions and actions",
+        explanation: "find walks a filesystem tree from a starting path, applies tests, and performs actions on matching paths."
+      },
+      {
+        category: "Foundations",
+        q: "In find . -type f -name \"*.sh\", what does the dot represent?",
+        options: [
+          "The current directory",
+          "The root directory",
+          "The user's home directory",
+          "A hidden file"
+        ],
+        answer: "The current directory",
+        explanation: "A dot is the starting path for the current directory; find then searches it and its descendants."
+      },
+      {
+        category: "Foundations",
+        q: "Why should the pattern in find . -name \"*.txt\" normally be quoted?",
+        options: [
+          "To stop the shell from expanding the wildcard before find receives it",
+          "To make the search case-insensitive",
+          "To limit the search to regular files",
+          "To enable recursive searching"
+        ],
+        answer: "To stop the shell from expanding the wildcard before find receives it",
+        explanation: "Quoting leaves the wildcard for find to interpret instead of allowing the shell to expand it first."
+      },
+      {
+        category: "Foundations",
+        q: "Which test performs a case-insensitive filename search?",
+        options: ["-iname", "-name", "-type", "-case"],
+        answer: "-iname",
+        explanation: "-iname works like -name but ignores uppercase and lowercase differences."
+      },
+      {
+        category: "Foundations",
+        q: "Which command searches only for regular files ending in .log?",
+        options: [
+          "find . -type f -name \"*.log\"",
+          "find . -type d -name \"*.log\"",
+          "find . -type l -name \"*.log\"",
+          "find . -user \"*.log\""
+        ],
+        answer: "find . -type f -name \"*.log\"",
+        explanation: "-type f limits results to regular files, while -name applies the filename pattern."
+      },
+      {
+        category: "Filters",
+        q: "Which find test selects directories?",
+        options: ["-type d", "-type f", "-type l", "-type s"],
+        answer: "-type d",
+        explanation: "The d in -type d stands for directory."
+      },
+      {
+        category: "Filters",
+        q: "Which find test selects symbolic links?",
+        options: ["-type l", "-type s", "-type p", "-type b"],
+        answer: "-type l",
+        explanation: "The l in -type l represents a symbolic link."
+      },
+      {
+        category: "Filters",
+        q: "What does -maxdepth 1 do in find . -maxdepth 1 -type f?",
+        options: [
+          "Search only the starting directory level",
+          "Return only one matching file",
+          "Search exactly one filename",
+          "Stop after one second"
+        ],
+        answer: "Search only the starting directory level",
+        explanation: "With starting path ., -maxdepth 1 prevents find from descending into subdirectories."
+      },
+      {
+        category: "Filters",
+        q: "Which command finds regular files larger than 100 MiB?",
+        options: [
+          "find . -type f -size +100M",
+          "find . -type f -size -100M",
+          "find . -type f -size 100m",
+          "find . -type f -mtime +100M"
+        ],
+        answer: "find . -type f -size +100M",
+        explanation: "The plus means larger than, and uppercase M represents MiB-sized units in GNU find."
+      },
+      {
+        category: "Filters",
+        q: "Which test finds files modified within approximately the last 30 minutes?",
+        options: ["-mmin -30", "-mmin +30", "-mtime -30", "-ctime 30M"],
+        answer: "-mmin -30",
+        explanation: "-mmin measures modification age in minutes, and -30 selects ages below 30 minutes."
+      },
+      {
+        category: "Filters",
+        q: "Which command finds empty directories?",
+        options: [
+          "find . -type d -empty",
+          "find . -type f -empty",
+          "find . -type d -size +1M",
+          "find . -empty -type l"
+        ],
+        answer: "find . -type d -empty",
+        explanation: "-type d selects directories and -empty requires them to contain no directory entries beyond the defaults."
+      },
+      {
+        category: "Expressions",
+        q: "What relationship normally exists between adjacent find tests?",
+        options: ["Implicit AND", "Implicit OR", "Exclusive OR", "Pipeline"],
+        answer: "Implicit AND",
+        explanation: "Adjacent tests such as -type f -name \"*.log\" must normally both be true."
+      },
+      {
+        category: "Expressions",
+        q: "Which expression correctly finds regular .txt or .md files?",
+        options: [
+          "find . -type f \\( -name \"*.txt\" -o -name \"*.md\" \\)",
+          "find . -type f -name \"*.txt\" | \"*.md\"",
+          "find . -type f -name \"*.txt,*.md\"",
+          "find . -type f && -name \"*.txt\" -name \"*.md\""
+        ],
+        answer: "find . -type f \\( -name \"*.txt\" -o -name \"*.md\" \\)",
+        explanation: "-o supplies OR, while escaped parentheses group the alternative name tests under the regular-file test."
+      },
+      {
+        category: "Expressions",
+        q: "What does ! mean in find . -type f ! -name \"*.txt\"?",
+        options: [
+          "Do not match the following condition",
+          "Run the search as root",
+          "Make the search case-insensitive",
+          "Stop after the first result"
+        ],
+        answer: "Do not match the following condition",
+        explanation: "The exclamation mark negates the following test, so .txt names are excluded."
+      },
+      {
+        category: "Expressions",
+        q: "Why are parentheses escaped in \\( -name \"*.txt\" -o -name \"*.md\" \\)?",
+        options: [
+          "To pass the parentheses to find instead of letting the shell interpret them",
+          "To turn the names into regular expressions",
+          "To disable recursive searching",
+          "To redirect errors to stderr"
+        ],
+        answer: "To pass the parentheses to find instead of letting the shell interpret them",
+        explanation: "The backslashes protect the parentheses from shell parsing so find can use them for expression grouping."
+      },
+      {
+        category: "Actions",
+        q: "What does {} represent in a find -exec action?",
+        options: [
+          "The current matched pathname",
+          "The starting directory only",
+          "The command's exit status",
+          "An empty Bash array"
+        ],
+        answer: "The current matched pathname",
+        explanation: "find replaces {} with the pathname or pathnames selected for that -exec invocation."
+      },
+      {
+        category: "Actions",
+        q: "What is the practical difference between -exec command {} \\; and -exec command {} +?",
+        options: [
+          "The semicolon form runs once per match; the plus form batches matches",
+          "The plus form runs once per match; the semicolon form batches matches",
+          "The semicolon form deletes files; the plus form only prints them",
+          "There is no difference"
+        ],
+        answer: "The semicolon form runs once per match; the plus form batches matches",
+        explanation: "The + ending reduces process launches by passing multiple pathnames to each command when possible."
+      },
+      {
+        category: "Actions",
+        q: "Which action asks for confirmation before running a command on each match?",
+        options: ["-ok", "-exec", "-print0", "-confirm"],
+        answer: "-ok",
+        explanation: "-ok resembles -exec but requests confirmation before each command invocation."
+      },
+      {
+        category: "Actions",
+        q: "What should you do immediately before using -delete with a new find expression?",
+        options: [
+          "Run the same selection with -print and verify every result",
+          "Add sudo automatically",
+          "Remove all quotation marks",
+          "Replace the starting path with /"
+        ],
+        answer: "Run the same selection with -print and verify every result",
+        explanation: "A preview confirms the starting path and filters before the destructive action is enabled."
+      },
+      {
+        category: "Actions",
+        q: "Why can copying all matching files into one directory be risky?",
+        options: [
+          "Different source files can have the same basename and overwrite each other",
+          "find automatically changes every filename",
+          "cp cannot copy shell scripts",
+          "The destination always becomes read-only"
+        ],
+        answer: "Different source files can have the same basename and overwrite each other",
+        explanation: "Files such as project-a/start.sh and project-b/start.sh collide when flattened into one destination directory."
+      },
+      {
+        category: "Safe Scripting",
+        q: "Why is for file in $(find . -type f) unsafe?",
+        options: [
+          "Command substitution and the loop split pathnames on whitespace",
+          "find cannot produce regular-file results",
+          "A for loop always runs as root",
+          "Command substitution deletes newline characters from filenames"
+        ],
+        answer: "Command substitution and the loop split pathnames on whitespace",
+        explanation: "Spaces, tabs, and newlines inside pathnames can break one pathname into several loop items."
+      },
+      {
+        category: "Safe Scripting",
+        q: "Which combination safely passes unusual filenames from find into a Bash read loop?",
+        options: [
+          "-print0 with IFS= read -r -d ''",
+          "-print with for file in $(...) ",
+          "-name with read file",
+          "-exec with unquoted $file"
+        ],
+        answer: "-print0 with IFS= read -r -d ''",
+        explanation: "Null separators preserve filenames containing spaces, tabs, backslashes, and newline characters."
+      },
+      {
+        category: "Safe Scripting",
+        q: "Why is done < <(find ... -print0) useful instead of piping directly into the while loop?",
+        options: [
+          "It can keep the loop in the current Bash process so updated variables remain available",
+          "It makes find run as the root user",
+          "It converts every pathname to uppercase",
+          "It disables all pipeline errors"
+        ],
+        answer: "It can keep the loop in the current Bash process so updated variables remain available",
+        explanation: "A piped loop often runs in a subshell; process substitution lets Bash redirect find output without losing loop variable changes afterward."
+      },
+      {
+        category: "Safe Scripting",
+        q: "Which approach counts matches without treating newline characters inside filenames as record separators on GNU/Linux?",
+        options: [
+          "find ... -printf '.' | wc -c",
+          "find ... | wc -l",
+          "for file in $(find ...); do count=$((count+1)); done",
+          "find ... -name wc -c"
+        ],
+        answer: "find ... -printf '.' | wc -c",
+        explanation: "GNU find prints one dot per match, and wc -c counts those dots rather than pathname lines."
+      },
+      {
+        category: "Safe Scripting",
+        q: "A cleanup script must target .log files older than 30 full days. Which first step is safest?",
+        options: [
+          "Preview with find \"$log_directory\" -type f -name \"*.log\" -mtime +30 -print",
+          "Run find / -delete immediately",
+          "Use rm -rf \"$log_directory\"",
+          "Suppress every error and assume the selection is correct"
+        ],
+        answer: "Preview with find \"$log_directory\" -type f -name \"*.log\" -mtime +30 -print",
+        explanation: "The preview verifies the validated directory, file type, pattern, and age condition before deletion is allowed."
+      }
+    ];
+
+    const QUIZ_SECONDS = 25 * 60;
+    const PASS_PERCENTAGE = 80;
+
+    const state = {
+      questions: [],
+      secondsRemaining: QUIZ_SECONDS,
+      timerId: null,
+      submitted: false,
+      reviewMode: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reviewButton = document.getElementById("reviewButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+    const breakdownBody = document.getElementById("breakdownBody");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = QUIZ_SECONDS;
+      state.submitted = false;
+      state.reviewMode = false;
+
+      quizForm.classList.remove("review-missed");
+      resultCard.classList.remove("show");
+      submitButton.disabled = false;
+      reviewButton.hidden = true;
+      reviewButton.textContent = "Review Missed";
+      statusLabel.textContent = "In progress";
+      breakdownBody.innerHTML = "";
+
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = String(questionIndex);
+
+        const meta = document.createElement("div");
+        meta.className = "question-meta";
+
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `Question ${questionIndex + 1}`;
+
+        const topic = document.createElement("span");
+        topic.className = "topic-badge";
+        topic.textContent = question.category;
+
+        meta.append(number, topic);
+
+        const heading = document.createElement("h2");
+        heading.textContent = question.q;
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", () => {
+            card.classList.remove("unanswered");
+            updateProgress();
+          });
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+
+        const answerLead = document.createElement("strong");
+        answerLead.textContent = `Correct answer: ${question.answer}. `;
+        explanation.append(answerLead, document.createTextNode(question.explanation));
+
+        card.append(meta, heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+        return;
+      }
+
+      state.secondsRemaining -= 1;
+      updateTimer();
+
+      if (state.secondsRemaining === 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function getUnansweredCount() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      return state.questions.length - answered;
+    }
+
+    function markUnansweredCards() {
+      quizForm.querySelectorAll(".question-card").forEach((card) => {
+        const selected = card.querySelector('input[type="radio"]:checked');
+        card.classList.toggle("unanswered", !selected);
+      });
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+
+      const unanswered = getUnansweredCount();
+      if (!autoSubmitted && unanswered > 0) {
+        const proceed = window.confirm(
+          `${unanswered} question${unanswered === 1 ? " is" : "s are"} unanswered. Submit anyway?`
+        );
+        if (!proceed) {
+          markUnansweredCards();
+          quizForm.querySelector(".question-card.unanswered")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      const topicScores = new Map();
+
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+        const isCorrect = Boolean(selected && selected.value === question.answer);
+
+        if (!topicScores.has(question.category)) {
+          topicScores.set(question.category, { correct: 0, total: 0 });
+        }
+
+        const topic = topicScores.get(question.category);
+        topic.total += 1;
+        if (isCorrect) {
+          correct += 1;
+          topic.correct += 1;
+        }
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && !isCorrect) label.classList.add("incorrect");
+        });
+
+        card.dataset.result = isCorrect ? "correct" : "missed";
+        card.classList.toggle("unanswered", !selected);
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — you can apply find confidently in practical Linux and shell-scripting tasks.";
+      } else if (percentage >= PASS_PERCENTAGE) {
+        resultMessage.textContent = "Passed — review the missed explanations and practice the related commands once more.";
+      } else if (percentage >= 60) {
+        resultMessage.textContent = "Developing — revisit expressions, actions, and safe filename processing before reattempting.";
+      } else {
+        resultMessage.textContent = "Foundation review required — study the notes, run the examples in a safe lab, and try again.";
+      }
+
+      renderBreakdown(topicScores);
+      submitButton.disabled = true;
+      reviewButton.hidden = correct === state.questions.length;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function renderBreakdown(topicScores) {
+      breakdownBody.innerHTML = "";
+
+      [...topicScores.entries()]
+        .sort(([first], [second]) => first.localeCompare(second))
+        .forEach(([topicName, score]) => {
+          const row = document.createElement("tr");
+          const topicCell = document.createElement("td");
+          const scoreCell = document.createElement("td");
+
+          topicCell.textContent = topicName;
+          scoreCell.textContent = `${score.correct} / ${score.total}`;
+          row.append(topicCell, scoreCell);
+          breakdownBody.append(row);
+        });
+    }
+
+    function toggleMissedReview() {
+      if (!state.submitted) return;
+
+      state.reviewMode = !state.reviewMode;
+      quizForm.classList.toggle("review-missed", state.reviewMode);
+      reviewButton.textContent = state.reviewMode ? "Show All Questions" : "Review Missed";
+
+      if (state.reviewMode) {
+        quizForm.querySelector('.question-card[data-result="missed"]')?.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reviewButton.addEventListener("click", toggleMissedReview);
+    reattemptButton.addEventListener("click", createAttempt);
+
+    createAttempt();
+  </script>
+</body>
+</html>
