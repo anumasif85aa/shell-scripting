@@ -545,6 +545,10 @@ if [[ -z "$source_file" ]]; then
     exit 2
 fi
 ```
+[source_file="${1:-}" Explanation in roman Urdu](md/bash_parameter_expansion_roman_urdu.md)
+
+[source_file="${1:-}" Explanatio ](md/bash_parameter_expansion_english.md)
+
 
 Strict options failure visibility improve karti hain, lekin har option ki exceptions aur side effects hain. Success, expected-nonzero aur real-failure paths test karein.
 
